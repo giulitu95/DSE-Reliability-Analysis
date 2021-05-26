@@ -21,7 +21,7 @@ class Voter(Component):
         if output_port is None:
             output_port = [Symbol(name + ".o0", REAL)]
 
-        super(Voter, self).__init__(name, ComponentType.VOTER, input_ports, output_port)
+        super(Voter, self).__init__(name, ComponentType.VOTER, input_ports, output_port, fault_atoms=[fault_atom])
         # Define nominal behaviour
         nom_behaviour = And(
             Ite(

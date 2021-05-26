@@ -47,3 +47,17 @@ class Component:
         # Each component has to have an internal behaviour
         assert self._behaviour_formula is not None, "Behaviour formula does not exist for this component"
         return self._behaviour_formula
+
+    @property
+    def input_ports(self):
+        """
+        Returns: a list of symbols corresponding to the input ports of the component
+        """
+        return self._input_ports
+
+    @property
+    def output_ports(self):
+        """
+        Returns: a list of symbols corresponding to the output ports of the component
+        """
+        return self._output_ports

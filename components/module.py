@@ -20,7 +20,7 @@ class Module(Component):
         if output_port is None:
             output_port = Symbol(name + ".o0", REAL)
 
-        super(Module, self).__init__(name, ComponentType.VOTER, input_ports, [output_port])
+        super(Module, self).__init__(name, ComponentType.VOTER, input_ports, [output_port], fault_atoms=[fault_atom])
 
         out_behaviour_func = Symbol(name + ".beh", FunctionType(REAL, [REAL] * len(input_ports)))
         out_constraint = Equals(
