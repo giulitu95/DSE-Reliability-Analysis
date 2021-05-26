@@ -4,13 +4,14 @@ from pysmt.shortcuts import *
 
 class Voter(Component):
     # TODO: generalize the voter with more then 3 real inputs?
-    def __init__(self, name: str, fault_atom: Symbol, input_ports=None, output_port=None):
-        '''
+    def __init__(self, name: str, fault_atom: Symbol, input_ports: list = None, output_port: Symbol = None):
+        """
         Create a voter, if input_ports and outputs_ports symbols are not specified, then the constructor creates them
         :param name: name of voter
         :param faulty_atom: symbol used to indicate whether the voter is faulty
-        '''
-        self._name = name
+        :param input_ports: list of symbols corresponding to the voter's input ports
+        :param outpu_ports: lsit of symbols corresponding to the voter's output ports
+        """
         self._fault_atom = fault_atom
         # Define input and output ports
         if input_ports is None:
