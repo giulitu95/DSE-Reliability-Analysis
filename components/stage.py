@@ -1,6 +1,6 @@
 from component import Component, ComponentType
 from module import NominalModule
-from patterns.pt_spec import PtType
+from patterns import PtType
 from pysmt.shortcuts import *
 from patterns.tmr_v111 import TmrV111
 
