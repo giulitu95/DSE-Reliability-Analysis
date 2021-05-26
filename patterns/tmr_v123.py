@@ -1,4 +1,4 @@
-from Pattern import Pattern
+from pattern import Pattern
 
 
 class tmr_v123(Pattern):
