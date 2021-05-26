@@ -1,5 +1,5 @@
-from pattern import Pattern, PatternType
-from components.module import Module
+from patterns.pattern import Pattern, PatternType
+from components.module import FaultyModule
 from components.voter import Voter
 from pysmt.shortcuts import *
 
@@ -17,7 +17,7 @@ class TmrV111(Pattern):
         :param voter_fault_atom: fault atom associated to the voter
         """
         pattern_name = comp_name + ".TMR_V111"
-        self._modules = [Module(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx]) for idx in range(3)]
+        self._modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx]) for idx in range(3)]
         modules_out_ports = []
         # The output of the modules are the inputs of the voter
         for module in self._modules:
