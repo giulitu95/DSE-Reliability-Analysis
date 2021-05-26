@@ -37,3 +37,13 @@ class Component:
         if fault_atoms is not None: self._fault_atoms = []
         else: self._fault_atoms = fault_atoms
 
+    @property
+    def behaviour_formula(self):
+        """
+        Retrieves the SMT formula representing the behaviour of the component
+        Returns: SMT formula
+
+        """
+        # Each component has to have an internal behaviour
+        assert self._behaviour_formula is not None, "Behaviour formula does not exist for this component"
+        return self._behaviour_formula
