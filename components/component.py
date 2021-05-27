@@ -11,6 +11,7 @@ class ComponentType(Enum):
     STAGE = 4
     CONCRETIZER = 5,
     ABSTRACTOR = 6
+    CSA = 7
 
 
 class Component:
@@ -34,7 +35,7 @@ class Component:
         self._comp_type = comp_type
         self._input_ports = input_ports
         self._output_ports = output_ports
-        if fault_atoms is not None: self._fault_atoms = []
+        if fault_atoms is None: self._fault_atoms = []
         else: self._fault_atoms = fault_atoms
 
     @property
@@ -61,3 +62,11 @@ class Component:
         Returns: a list of symbols corresponding to the output ports of the component
         """
         return self._output_ports
+
+    @property
+    def fault_atoms(self):
+        """
+        Returns: a list of fault atoms associated to that component
+        :return:
+        """
+        return self._fault_atoms

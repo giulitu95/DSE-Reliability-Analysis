@@ -1,4 +1,6 @@
-from pattern import *
-from pt_spec import *
-from tmr_v123 import *
-from tmr_v111 import *
+from patterns.pattern import *
+from patterns.pt_spec import *
+from patterns.tmr_v123 import *
+from patterns.tmr_v111 import *
+
+

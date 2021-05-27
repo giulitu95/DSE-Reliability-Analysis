@@ -4,7 +4,7 @@ from pysmt.shortcuts import *
 
 class FaultyModule(Component):
 
-    def __init__(self, name: str, n_in_ports: int, fault_atom: Symbol, input_ports: list = None, output_port: Symbol = None):
+    def __init__(self, name: str, n_in_ports: int, fault_atom: Symbol, nominal_beh: Symbol,  input_ports: list = None, output_port: Symbol = None):
         """
         Create a faulty module, if input_ports and outputs_ports symbols are not specified, then the constructor creates them
         :param name: module's name
@@ -22,14 +22,14 @@ class FaultyModule(Component):
 
         super(FaultyModule, self).__init__(name, ComponentType.VOTER, input_ports, [output_port], fault_atoms=[fault_atom])
 
-        out_behaviour_func = Symbol(name + ".beh", FunctionType(REAL, [REAL] * len(input_ports)))
-        out_constraint = Equals(
-            self._output_ports[0],
-            Function(out_behaviour_func, self._input_ports)
-        )
+        faulty_behaviour_func = Symbol(name + ".beh", FunctionType(REAL, [REAL] * len(input_ports)))
+
         self._behaviour_formula = Implies(
             Not(self._fault_atom),
-            out_constraint
+            Equals(
+                self._output_ports[0],
+                Function(nominal_beh, self._input_ports)
+            )
         )
 
 
@@ -51,10 +51,15 @@ class NominalModule(Component):
         super(NominalModule, self).__init__(name, ComponentType.VOTER, input_ports, [output_port])
 
         out_behaviour_func = Symbol(name + ".beh", FunctionType(REAL, [REAL] * len(input_ports)))
+        self._nominal_beh = out_behaviour_func
         self._behaviour_formula = Equals(
             self._output_ports[0],
             Function(out_behaviour_func, self._input_ports)
         )
+
+    @property
+    def nominal_beh (self):
+        return self._nominal_beh
 
 '''
 # Test - Example
