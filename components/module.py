@@ -22,8 +22,6 @@ class FaultyModule(Component):
 
         super(FaultyModule, self).__init__(name, ComponentType.VOTER, input_ports, [output_port], fault_atoms=[fault_atom])
 
-        faulty_behaviour_func = Symbol(name + ".beh", FunctionType(REAL, [REAL] * len(input_ports)))
-
         self._behaviour_formula = Implies(
             Not(self._fault_atom),
             Equals(

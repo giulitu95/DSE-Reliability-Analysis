@@ -213,5 +213,6 @@ class Abstractor(Component):
 if __name__ == "__main__":
     from patterns import TmrV111Definition
     csa = Csa(TmrV111Definition("C1", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2")], Symbol("F3")))
-    print(csa.behaviour_formula.serialize())
-    print(csa.get_qe_formula().serialize())'''
+    with Solver("z3") as solver:
+        print(solver.is_sat(Not(Implies(csa.behaviour_formula, csa.get_qe_formula()))))
+'''
