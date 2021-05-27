@@ -1,11 +1,7 @@
 from enum import Enum
 from params import NonFuncParamas
+from patterns import PatternType
 
-
-class PtType(Enum):
-    TMR_V111 = 1
-    TMR_V123 = 2
-    DPX = 3
 
 
 class PatternSpec:
@@ -20,7 +16,7 @@ class TmrV111Spec(PatternSpec):
         :param modules_probs: list of length 3 containing the probabilities of the 3 modules
         :param voter_probs: fault probability of the voter
         '''
-        super(TmrV111Spec, self).__init__(PtType.TMR_V111)
+        super(TmrV111Spec, self).__init__(PatternType.TMR_V111)
     pass
 
 
@@ -31,5 +27,5 @@ class Tmr123Spec(PatternSpec):
         :param modules_probs: list of length 3 containing the probabilities of the 3 modules
         :param voters_probs: list of length 3 containing the probabidlities of the 3 voters
         '''
-        super(Tmr123Spec, self).__init__(PtType.TMR_V123)
+        super(Tmr123Spec, self).__init__(PatternType.TMR_V123)
     pass

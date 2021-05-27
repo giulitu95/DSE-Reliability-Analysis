@@ -8,16 +8,18 @@ class TmrV111(Pattern):
     """
     Represent a pattern of type tmr-v111
     """
-    def __init__(self, comp_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol):
+    n_f_atoms = 4
+    def __init__(self, comp_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
         """
         Creata TMR-V111 pattern
         :param comp_name: name of the component to which the pattern has to be applied
         :param comp_n_inputs: number of inputs of the component to which the pattern has to be applied
         :param modules_fault_atoms: list of fault atoms associated to the 3 modules
         :param voter_fault_atom: fault atom associated to the voter
+        :param nominal_mod_beh: nominal behaviour of the modules
         """
         pattern_name = comp_name + ".TMR_V111"
-        self._modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx]) for idx in range(3)]
+        self._modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx], nominal_mod_beh) for idx in range(3)]
         modules_out_ports = []
         # The output of the modules are the inputs of the voter
         for module in self._modules:
