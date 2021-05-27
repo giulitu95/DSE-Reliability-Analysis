@@ -60,13 +60,3 @@ class NominalModule(Component):
     @property
     def nominal_beh (self):
         return self._nominal_beh
-
-'''
-# Test - Example
-if __name__ == "__main__":
-    m1 = Module("C1-TMR_V11.M1", 2, Symbol("F"))
-    print(m1.behaviour_formula.serialize())
-
-    m2 = Module("C1-TMR_V11.M1", 2, Symbol("F"), input_ports=[Symbol("i0", REAL), Symbol("i1", REAL)], output_port=Symbol("o0", REAL))
-    print(m2.behaviour_formula.serialize())
-'''

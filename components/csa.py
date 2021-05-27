@@ -1,4 +1,4 @@
-from patterns import PatternType
+from patterns import PatternType, PatternDefinition
 from component import ComponentType, Component
 from stage import Stage
 from pysmt.shortcuts import *
@@ -13,31 +13,26 @@ class Csa(Component):
     components Concretizer - Stage - Abstractor
     '''
 
-    def __init__(self, comp_name: str, comp_n_inputs: int, pt_type: PatternType, fault_atoms: list):
-        '''
-        Create a CSA, check if the formula is in cache, otherwise create it
-        :param comp_name: name of the component
-        :param comp_n_inputs: number of inputs of the basic component
-        :param pt_type: type of pattern
-        :param fault_atoms: list of available fault atoms
-        '''
-        self._comp_name = comp_name
-        self._comp_n_inputs = comp_n_inputs
-        self._pt_type = pt_type
-        self._stage = Stage(comp_name, comp_n_inputs, pt_type, fault_atoms)
+    def __init__(self, pt_definition: PatternDefinition):
+        """
+        Create a Csa
+        :param pt_definition: definition of a pattern
+        """
+        self._pt_definition = pt_definition
+        self._stage = Stage(pt_definition)
         # We can also delete this, this is needed only in order to compyte the behaviour formula which actually we don't need
-        self._concretizer = Concretizer("[" + comp_name + "-" + pt_type.name + "].concr",
-                                        comp_n_inputs, len(self._stage.pattern.input_ports),
+        self._concretizer = Concretizer("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].concr",
+                                        pt_definition.comp_n_inputs, len(self._stage.pattern.input_ports),
                                         input_comp_ports=self._stage.nominal_module.input_ports,
                                         input_pattern_ports=self._stage.pattern.input_ports
                                         )
-        self._abstractor = Abstractor("[" + comp_name + "-" + pt_type.name + "].abstr",
+        self._abstractor = Abstractor("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].abstr",
                                       len(self._stage.pattern.output_ports),
                                       output_pattern_ports=self._stage.pattern.output_ports,
                                       output_comp_port=self._stage.nominal_module.output_ports
                                       )
 
-        super(Csa, self).__init__("[" + comp_name + "-" + pt_type.name + "].csa",
+        super(Csa, self).__init__("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].csa",
                                   ComponentType.CSA, self._concretizer.input_ports,
                                   self._abstractor.output_ports,
                                   fault_atoms=self._stage.fault_atoms
@@ -46,18 +41,22 @@ class Csa(Component):
             [self._stage.behaviour_formula, self._concretizer.behaviour_formula, self._abstractor.behaviour_formula])
 
     def get_qe_formula(self):
-        file_name = os.path.join('../csa-cache/', self._pt_type.name + "_" + str(self._comp_n_inputs) + ".f")
+        """
+        Create a behaviour formula of the Csa containing only boolean atoms (faulty atoms, concretizer input ports and abstractor output ports)
+        :return: behaviour boolean formula
+        """
+        file_name = os.path.join('../csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
         dummy_comp_name = "EMPTY"
         if not os.path.exists(file_name):
             # Create a generic csa and save it in cache
             fault_atoms = [Symbol("EMPTY_F" + str(idx)) for idx in range(len(self._fault_atoms))]
-            stage = Stage(dummy_comp_name, self._comp_n_inputs, self._pt_type, fault_atoms)
-            concretizer = Concretizer("[" + dummy_comp_name + "-" + self._pt_type.name + "].concr",
-                                      self._comp_n_inputs, len(stage.pattern.input_ports),
+            stage = Stage(self._pt_definition.get_dummy_definition())
+            concretizer = Concretizer("[" + dummy_comp_name + "-" + self._pt_definition.pt_type.name + "].concr",
+                                      self._pt_definition.comp_n_inputs, len(stage.pattern.input_ports),
                                       input_comp_ports=stage.nominal_module.input_ports,
                                       input_pattern_ports=stage.pattern.input_ports
                                       )
-            abstractor = Abstractor("[" + dummy_comp_name + "-" + self._pt_type.name + "].abstr",
+            abstractor = Abstractor("[" + dummy_comp_name + "-" + self._pt_definition.pt_type.name + "].abstr",
                                     len(stage.pattern.output_ports),
                                     output_pattern_ports=stage.pattern.output_ports,
                                     output_comp_port=stage.nominal_module.output_ports
@@ -75,9 +74,9 @@ class Csa(Component):
             with open(file_name, "r") as cache_file:
                 dummy_qe_formula_str = cache_file.read()
         # Parse string and extract SMT formula
-        qe_formula = dummy_qe_formula_str.replace(dummy_comp_name, self._comp_name)
+        qe_formula = dummy_qe_formula_str.replace(dummy_comp_name, self._pt_definition.comp_name)
         for idx, f_atom in enumerate(self._fault_atoms):
-            qe_formula = qe_formula.replace(self._comp_name + "_F" + str(idx), f_atom.serialize())
+            qe_formula = qe_formula.replace(self._pt_definition.comp_name + "_F" + str(idx), f_atom.serialize())
 
         formula = parse(qe_formula)
 
@@ -86,7 +85,13 @@ class Csa(Component):
         #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
         return formula
 
-    def __apply_qe(self, formula, to_keep_atoms):
+    def __apply_qe(self, formula, to_keep_atoms: list):
+        """
+        Apply AllSMT on a formula obtaining a formula which contains only the atoms in to_keep_atoms list
+        :param formula:
+        :param to_keep_atoms:
+        :return:
+        """
         # Define callback called each time mathsat finds a new model
         def callback(model, converter, result):
             # Convert back the mathsat model to a pySMT formula
@@ -204,8 +209,9 @@ class Abstractor(Component):
         self._behaviour_formula = And(out_constraints)
 
 
-# Test - Example
+'''# Test - Example
 if __name__ == "__main__":
-    csa = Csa("C1", 1, PatternType.TMR_V111, [Symbol("F0"), Symbol("F1"), Symbol("F2"), Symbol("F3")])
+    from patterns import TmrV111Definition
+    csa = Csa(TmrV111Definition("C1", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2")], Symbol("F3")))
     print(csa.behaviour_formula.serialize())
-    print(csa.get_qe_formula().serialize())
+    print(csa.get_qe_formula().serialize())'''

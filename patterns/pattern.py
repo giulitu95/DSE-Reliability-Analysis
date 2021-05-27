@@ -1,5 +1,6 @@
 from components.component import Component, ComponentType
 from enum import Enum
+import abc
 
 
 class PatternType(Enum):
@@ -9,6 +10,69 @@ class PatternType(Enum):
     TMR_V111 = 1
     TMR_V123 = 2
     # ...
+
+
+class PatternDefinition:
+    """
+    Description of a pattern
+    """
+    def __init__(self, comp_name: str, comp_n_inputs: int, f_atoms: list, pt_type: PatternType):
+        """
+        Create the description of a particular pattern
+        :param comp_name: name of the component for which the pattern has to be applied
+        :param comp_n_inputs: number of inputs of the component for which the pattern has to be applied
+        :param f_atoms: fault_atoms of the pattern
+        :param pt_type: type of pattern
+        """
+        self._atoms = f_atoms
+        self._pt_type = pt_type
+        self._comp_name = comp_name
+        self._comp_n_inputs = comp_n_inputs
+
+    @abc.abstractmethod
+    def get_dummy_definition(self) -> 'PatternDefinition':
+        """
+        Returns a pattern which is applied on a dummy component
+        :return: The definition of the pattern
+        """
+        pass
+
+    @abc.abstractmethod
+    def create(self, nominal_mod_beh) -> 'Pattern':
+        """
+        Creates an instance of the pattern having the current definition
+        :param nominal_mod_beh: the nominal behaviour of the component
+        :return: an instance of the pattern
+        """
+        pass
+
+    @property
+    def f_atoms(self) -> list:
+        """
+        :return: the list of fault_atoms for the pattern
+        """
+        return self._atoms
+
+    @property
+    def pt_type(self) -> PatternType:
+        """
+        :return: type of pattern
+        """
+        return self._pt_type
+
+    @property
+    def comp_name(self) -> str:
+        """
+        :return: the name of the component
+        """
+        return self._comp_name
+
+    @property
+    def comp_n_inputs(self) -> int:
+        """
+        :return: number of inputs of the components
+        """
+        return self._comp_n_inputs
 
 
 class Pattern(Component):

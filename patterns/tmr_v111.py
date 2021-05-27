@@ -1,7 +1,46 @@
-from patterns.pattern import Pattern, PatternType
+from patterns.pattern import Pattern, PatternType, PatternDefinition
 from components.module import FaultyModule
 from components.voter import Voter
 from pysmt.shortcuts import *
+
+
+class TmrV111Definition(PatternDefinition):
+    """
+    Definition for pattern TMR-V111
+    """
+    def __init__(self, comp_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
+        """
+        Create a definition for pattern TMRV111
+        :param comp_name: name of the component
+        :param comp_n_inputs: number of component's inputs
+        :param modules_f_atoms: list of fault atoms of the pattern
+        :param voter_f_atom: fault atom associated to the voter
+        """
+        self._modules_f_atoms = modules_f_atoms
+        assert len(modules_f_atoms) == 3, "[TmrV111] pattern has 3 modules, a correct number of fault atoms"
+        self._voter_f_atom = voter_f_atom
+        super(TmrV111Definition, self).__init__(comp_name, comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
+
+    def get_dummy_definition(self) -> 'TmrV111Definition':
+        return TmrV111Definition("EMPTY", self.comp_n_inputs, ["EMPTY_F" + str(idx) for idx in range(3)], Symbol("EMPTY_F3"))
+
+    def create(self, nominal_mod_beh) -> Pattern:
+        return TmrV111(self._comp_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
+
+    @property
+    def modules_f_atoms(self) -> list:
+        """
+        :return: list of fault atoms related to the modules of the patterns
+        """
+        return self._modules_f_atoms
+
+    @property
+    def voter_f_atom(self) -> Symbol:
+        """
+        :return: fault atom related to the voter of the pattern
+        """
+        return self._voter_f_atom
+
 
 
 class TmrV111(Pattern):
