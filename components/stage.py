@@ -1,5 +1,5 @@
-from component import Component, ComponentType
-from module import NominalModule
+from components.component import Component, ComponentType
+from components.module import NominalModule
 from patterns import PatternType, PatternDefinition
 from pysmt.shortcuts import *
 from patterns.tmr_v111 import TmrV111, TmrV111Definition
@@ -19,7 +19,7 @@ class Stage(Component):
         input_ports = self._pattern.input_ports + self._nominal_module.input_ports
         output_ports = self._pattern.output_ports + self._nominal_module.output_ports
 
-        super(Stage, self).__init__("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].stage", ComponentType.STAGE, input_ports, output_ports, fault_atoms=self._pattern.fault_atoms)
+        super(Stage, self).__init__("[" + self._pattern.name + "].stage", ComponentType.STAGE, input_ports, output_ports, fault_atoms=self._pattern.fault_atoms)
 
         # Define behaviour formula: it corresponds to the behaviour of the pattern and the behaviour of the nominal module
         self._behaviour_formula = And(

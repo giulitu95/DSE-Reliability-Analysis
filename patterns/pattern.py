@@ -16,7 +16,7 @@ class PatternDefinition:
     """
     Description of a pattern
     """
-    def __init__(self, comp_name: str, comp_n_inputs: int, f_atoms: list, pt_type: PatternType):
+    def __init__(self, comp_name: str, pt_name: str,  comp_n_inputs: int, f_atoms: list, pt_type: PatternType):
         """
         Create the description of a particular pattern
         :param comp_name: name of the component for which the pattern has to be applied
@@ -28,6 +28,7 @@ class PatternDefinition:
         self._pt_type = pt_type
         self._comp_name = comp_name
         self._comp_n_inputs = comp_n_inputs
+        self._pt_name = pt_name
 
     @abc.abstractmethod
     def get_dummy_definition(self) -> 'PatternDefinition':
@@ -74,12 +75,16 @@ class PatternDefinition:
         """
         return self._comp_n_inputs
 
+    @property
+    def pt_name(self):
+        return self._pt_name
+
 
 class Pattern(Component):
     """
     Class representing a general pattern
     """
-    def __init__(self, name: str, pattern_type: PatternType, fault_atoms: list, input_ports: list, output_ports: list):
+    def __init__(self, name: str, pattern_type: PatternType, fault_atoms: list, modules: list, output_ports: list):
         """
         Create a generic pattern
         :param name: name of the instance of the pattern
@@ -88,5 +93,13 @@ class Pattern(Component):
         :param input_ports: list of symbols corresponding to the input ports
         :param output_ports: list of symbols corresponding to the output ports
         """
+        input_ports = []
+        for module in modules:
+            input_ports.extend(module.input_ports)
+        self._modules = modules
         super(Pattern, self).__init__(name, ComponentType.PATTERN, input_ports, output_ports, fault_atoms=fault_atoms)
         self._pattern_type = pattern_type
+
+    @property
+    def modules(self):
+        return self._modules

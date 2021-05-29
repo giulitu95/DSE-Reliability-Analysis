@@ -70,3 +70,7 @@ class Component:
         :return:
         """
         return self._fault_atoms
+
+    @property
+    def name(self):
+        return self._name

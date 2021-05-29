@@ -8,7 +8,7 @@ class TmrV111Definition(PatternDefinition):
     """
     Definition for pattern TMR-V111
     """
-    def __init__(self, comp_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
+    def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
         """
         Create a definition for pattern TMRV111
         :param comp_name: name of the component
@@ -17,15 +17,16 @@ class TmrV111Definition(PatternDefinition):
         :param voter_f_atom: fault atom associated to the voter
         """
         self._modules_f_atoms = modules_f_atoms
-        assert len(modules_f_atoms) == 3, "[TmrV111] pattern has 3 modules, a correct number of fault atoms"
+        assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, a correct number of fault atoms"
         self._voter_f_atom = voter_f_atom
-        super(TmrV111Definition, self).__init__(comp_name, comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
+        super(TmrV111Definition, self).__init__(comp_name, pt_name, comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
+        self._pt_name = pt_name
 
     def get_dummy_definition(self) -> 'TmrV111Definition':
         return TmrV111Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(3)], Symbol("EMPTY_F3"))
 
     def create(self, nominal_mod_beh) -> Pattern:
-        return TmrV111(self._comp_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
+        return TmrV111(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
 
     @property
     def modules_f_atoms(self) -> list:
@@ -43,12 +44,14 @@ class TmrV111Definition(PatternDefinition):
 
 
 
+
+
 class TmrV111(Pattern):
     """
     Represent a pattern of type tmr-v111
     """
     n_f_atoms = 4
-    def __init__(self, comp_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
+    def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
         """
         Creata TMR-V111 pattern
         :param comp_name: name of the component to which the pattern has to be applied
@@ -57,24 +60,21 @@ class TmrV111(Pattern):
         :param voter_fault_atom: fault atom associated to the voter
         :param nominal_mod_beh: nominal behaviour of the modules
         """
-        pattern_name = comp_name + ".TMR_V111"
-        self._modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx], nominal_mod_beh) for idx in range(3)]
+        pattern_name = comp_name + "." + pt_name
+        modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx], nominal_mod_beh) for idx in range(3)]
         modules_out_ports = []
         # The output of the modules are the inputs of the voter
-        for module in self._modules:
+        for module in modules:
             modules_out_ports.extend(module.output_ports)
-        assert len(modules_out_ports) == 3, "[TmrV11] The voter must have 3 inputs"
+        assert len(modules_out_ports) == 3, "[" + pattern_name + "] The voter must have 3 inputs"
         self._voter = Voter(pattern_name + ".V", voter_fault_atom, input_ports=modules_out_ports)
-        # Input ports of the pattern correspond to the input ports of the modules
-        input_ports = []
-        for module in self._modules: input_ports.extend(module.input_ports)
         # Output port of the pattern corresponds to the output port of the voter
         output_ports = self._voter.output_ports
-        super(TmrV111, self).__init__(pattern_name, PatternType.TMR_V111, modules_fault_atoms + [voter_fault_atom], input_ports, output_ports)
+        super(TmrV111, self).__init__(pattern_name, PatternType.TMR_V111, modules_fault_atoms + [voter_fault_atom], modules, output_ports)
 
         # Define behaviour formula: And of subcomponents behaviours
         # Modules
-        subcomp_beh_formula = [module.behaviour_formula for module in self._modules]
+        subcomp_beh_formula = [module.behaviour_formula for module in modules]
         # Voter
         subcomp_beh_formula.append(self._voter.behaviour_formula)
         self._behaviour_formula = And(subcomp_beh_formula)
