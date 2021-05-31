@@ -48,48 +48,36 @@ class Csa(Component):
         :return: behaviour boolean formula
         """
         print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Get AllSMT behaviour formula: ")
-        file_name = os.path.join('../csa-cache/', self._pt_definition.pt_name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
-        dummy_comp_name = "EMPTY"
+        file_name = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
         if not os.path.exists(file_name):
-            # Create a generic csa and save it in cache
             print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Formula is not in cache, performing AllSMT...")
-            fault_atoms = [Symbol("EMPTY_F" + str(idx)) for idx in range(len(self._fault_atoms))]
-            stage = Stage(self._pt_definition.get_dummy_definition())
-            concretizer = Concretizer("[" + dummy_comp_name + "-" + self._pt_definition.pt_name + "].concr",
-                                      self._pt_definition.comp_n_inputs, len(stage.pattern.input_ports),
-                                      input_comp_ports=stage.nominal_module.input_ports,
-                                      input_pattern_ports=stage.pattern.input_ports
-                                      )
-            abstractor = Abstractor("[" + dummy_comp_name + "-" + self._pt_definition.pt_name + "].abstr",
-                                    len(stage.pattern.output_ports),
-                                    output_pattern_ports=stage.pattern.output_ports,
-                                    output_comp_port=stage.nominal_module.output_ports
-                                    )
-            behaviour_formula = And(stage.behaviour_formula, concretizer.behaviour_formula,
-                                    abstractor.behaviour_formula)
-            # Quantify out non-boolean variables
-            dummy_qe_formula =  self.__apply_qe(behaviour_formula, fault_atoms + concretizer.input_ports + abstractor.output_ports)
-            print(
-                "[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Done!")
-            dummy_qe_formula_str = dummy_qe_formula.serialize()
+            formula = self.__apply_qe(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Create dummy formula and save it in cache...")
+            dummy_qe_formula = formula.serialize()
+            for idx, f_atom in enumerate(self._fault_atoms):
+                dummy_qe_formula = dummy_qe_formula.replace(f_atom.serialize(), "$EMPTY_F$" + str(idx))
+            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.pt_name, self._pt_definition.pt_type.name)
+            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.comp_name, "$EMPTY$")
             # Print formula on file
             with open(file_name, "w") as cache_file:
-                cache_file.write(dummy_qe_formula_str)
+                cache_file.write(dummy_qe_formula)
+
         else:
             print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Formula found in cache")
             # Import formula from cache
             with open(file_name, "r") as cache_file:
                 dummy_qe_formula_str = cache_file.read()
-        # Parse string and extract SMT formula
-        print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Parse formula...")
-        qe_formula = dummy_qe_formula_str.replace(dummy_comp_name, self._pt_definition.comp_name)
-        for idx, f_atom in enumerate(self._fault_atoms):
-            qe_formula = qe_formula.replace(self._pt_definition.comp_name + "_F" + str(idx), f_atom.serialize())
-        formula = parse(qe_formula)
-        print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Done!")
-        # Check
-        # with Solver("z3") as solver:
-        #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
+            # Parse string and extract SMT formula
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Parse formula...")
+            formula_str = dummy_qe_formula_str.replace("$EMPTY$", self._pt_definition.comp_name)
+            for idx, f_atom in enumerate(self._fault_atoms):
+                formula_str = formula_str.replace("$EMPTY_F$" + str(idx), f_atom.serialize())
+            formula_str = formula_str.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_name)
+            formula = parse(formula_str)
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Done!")
+            # Check
+            # with Solver("z3") as solver:
+            #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
         return formula
 
     def __apply_qe(self, formula, to_keep_atoms: list):
