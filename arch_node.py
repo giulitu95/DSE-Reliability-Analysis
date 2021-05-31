@@ -40,25 +40,23 @@ class ArchNode:
             n_conf_atoms = math.ceil(math.log(len(pt_library), 2))
         else:
             n_conf_atoms = 1
+        # List of configuration atoms for this csa
         self._conf_atoms = [Symbol("CONF_" + comp_name + "[" + str(idx) +"]") for idx in range(n_conf_atoms)]
         # check invalid configurations
         invalid_conf = []
-        valid_conf = []
-        for idx in range((2 ** n_conf_atoms)):
+        for idx in range(len(pt_library), (2 ** n_conf_atoms)):
             bin_str = '{0:0{l}b}'.format(idx, l = len(self._conf_atoms))
             conf = []
             for i, bin in enumerate(bin_str):
                 if bin == '0': conf.append(Not(self._conf_atoms[i]))
                 else: conf.append(self._conf_atoms[i])
-            if idx >= len(pt_library):
-                invalid_conf.append(And(conf))
-            else:
-                valid_conf.append(And(conf))
-        self._conf_formula = And(
-            Or(valid_conf),
+            invalid_conf.append(And(conf))
+        self._conf_formula = And( # Here we exclude invalid configurations
             Not(Or(invalid_conf))
         )
+        # Constraints which describe the connections between components
         self._linker_constr = None
+        # They say whether a pattern (configuration) con be linked to another pattern (configuration)
         self._compatibility_constr = None
         if next_archnodes is not None:
             # link the csa of the current node with the csa of the next node
@@ -96,7 +94,22 @@ class ArchNode:
             # It is the last node! (tle)
             pass
 
+    def get_qe_formulas(self) -> list:
+        """
+        Retrieve a list of boolean formula obtained applying AllSMT to every
+        :return: the list of boolean formula for each csa
+        """
+        formulas = []
+        for csa in self._csa_list:
+            formulas.append(csa.get_qe_formula())
+        return formulas
+
     def get_conf_by_index(self, index: int):
+        """
+        Given an index retrieve a formula representing that configuration
+        :param index: index
+        :return: Boolean formula in DNF which describe the configuration
+        """
         bin_str = '{0:0{l}b}'.format(index, l = len(self._conf_atoms))
         conf = []
         for i, bin in enumerate(bin_str):
@@ -105,9 +118,32 @@ class ArchNode:
         return And(conf)
 
     @property
-    def csa_list(self):
+    def csa_list(self) -> list:
+        """
+        :return: list of csa of the node
+        """
         return self._csa_list
 
+    @property
+    def linker_constr(self):
+        """
+        :return: Formula representing the connections between the various csa
+        """
+        return self._linker_constr
+
+    @property
+    def compatibility_constr(self):
+        """
+        :return: Formula representing the available connections between CSA
+        """
+        return self._compatibility_constr
+
+    @property
+    def conf_formula(self):
+        """
+        :return: Formula representing the available configurations
+        """
+        return self._conf_formula
 
 
 '''# Test - Example
@@ -115,6 +151,11 @@ from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
     an2 = ArchNode([TmrV111Spec("TMR_V111_A", [], NonFuncParamas(2,3))], "C2", 2)
-    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [], NonFuncParamas(2,3)), TmrV111Spec("TMR_V111_B", [], NonFuncParamas(2,3)), TmrV111Spec("TMR_V111_C", [], NonFuncParamas(2,3))], "C1", 1, next_archnodes=[an2])
+    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [], NonFuncParamas(2,3)),
+                    TmrV111Spec("TMR_V111_B", [], NonFuncParamas(2,3)),
+                    TmrV111Spec("TMR_V111_C", [], NonFuncParamas(2,3))],
+                   "C1", 1, next_archnodes=[an2])
 
-'''
+    qe1 = an1.get_qe_formulas()
+    qe2 = an2.get_qe_formulas()'''
+
