@@ -22,9 +22,6 @@ class TmrV111Definition(PatternDefinition):
         super(TmrV111Definition, self).__init__(comp_name, pt_name, comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
         self._pt_name = pt_name
 
-    def get_dummy_definition(self) -> 'TmrV111Definition':
-        return TmrV111Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(3)], Symbol("EMPTY_F3"))
-
     def create(self, nominal_mod_beh) -> Pattern:
         return TmrV111(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
 

@@ -31,14 +31,6 @@ class PatternDefinition:
         self._pt_name = pt_name
 
     @abc.abstractmethod
-    def get_dummy_definition(self) -> 'PatternDefinition':
-        """
-        Returns a pattern which is applied on a dummy component
-        :return: The definition of the pattern
-        """
-        pass
-
-    @abc.abstractmethod
     def create(self, nominal_mod_beh) -> 'Pattern':
         """
         Creates an instance of the pattern having the current definition
