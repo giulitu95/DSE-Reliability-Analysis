@@ -29,12 +29,6 @@ class ArchNode:
             #  ...
         # create list of available fault atoms
         self._fault_atoms = [Symbol(comp_name + "_F" + str(idx)) for idx in range(self._max_n_f)]
-        # prepare list of csa for each possible pattern-combination
-        self._csa_list = []
-        for pt in pt_library:
-            if pt.pt_type == PatternType.TMR_V111:
-                pt_def = TmrV111Definition(comp_name, pt.name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
-                self._csa_list.append(Csa(pt_def))
         # prepare configuration atoms
         if len(pt_library) > 1:
             n_conf_atoms = math.ceil(math.log(len(pt_library), 2))
@@ -54,6 +48,43 @@ class ArchNode:
         self._conf_formula = And( # Here we exclude invalid configurations
             Not(Or(invalid_conf))
         )
+        self._csa_list = []
+        self._f_atoms2prob = {}
+        prob_constraints = []
+        # create probability symbols (real)
+        for f_idx, f_atom in enumerate(self._fault_atoms):
+            self._f_atoms2prob[f_atom] = Symbol("p" + str(f_idx) + "_" + comp_name, REAL)
+
+        # - prepare list of csa for each possible pattern-combination
+        # - assign non functional parameters to the probability symbol
+        for idx, pt in enumerate(pt_library):
+            conf = self.get_conf_by_index(idx)
+            if pt.pt_type == PatternType.TMR_V111:
+                # create Csa
+                pt_def = TmrV111Definition(comp_name, pt.name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
+                csa = Csa(pt_def)
+                self._csa_list.append(csa)
+                # assign non functional parameters to the probability symbols associated to each fault atoms
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voter_param.fault_prob))
+                    )
+                )
+            # TODO: do this for all patterns:
+            #  elif: pt.pt_type == PatternType.TMR_V123
+            #  ...
+
+        self._prob_constraints = And(prob_constraints)
+
         # Constraints which describe the connections between components
         self._linker_constr = None
         # They say whether a pattern (configuration) con be linked to another pattern (configuration)
@@ -145,17 +176,32 @@ class ArchNode:
         """
         return self._conf_formula
 
+    @property
+    def prob_constraints(self):
+        """
+        :return: A formula which assigns to each probability symbol a value (depending on configuration)
+        """
+        return self._prob_constraints
 
-'''# Test - Example
+    @property
+    def f_atoms2prob(self):
+        """
+        :return: A map which for every fault atom it's assiciated a probability real symbol
+        """
+        return self._f_atoms2prob
+
+
+# Test - Example
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    an2 = ArchNode([TmrV111Spec("TMR_V111_A", [], NonFuncParamas(2,3))], "C2", 2)
-    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [], NonFuncParamas(2,3)),
-                    TmrV111Spec("TMR_V111_B", [], NonFuncParamas(2,3)),
-                    TmrV111Spec("TMR_V111_C", [], NonFuncParamas(2,3))],
+    an2 = ArchNode([TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))], "C2", 2)
+    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+                    TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+                    TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))],
                    "C1", 1, next_archnodes=[an2])
 
     qe1 = an1.get_qe_formulas()
-    qe2 = an2.get_qe_formulas()'''
+    qe2 = an2.get_qe_formulas()
+
 
