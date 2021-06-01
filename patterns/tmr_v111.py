@@ -40,9 +40,6 @@ class TmrV111Definition(PatternDefinition):
         return self._voter_f_atom
 
 
-
-
-
 class TmrV111(Pattern):
     """
     Represent a pattern of type tmr-v111
