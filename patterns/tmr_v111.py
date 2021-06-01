@@ -45,6 +45,7 @@ class TmrV111(Pattern):
     Represent a pattern of type tmr-v111
     """
     n_f_atoms = 4
+
     def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
         """
         Creata TMR-V111 pattern

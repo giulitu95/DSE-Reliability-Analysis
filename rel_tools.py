@@ -49,7 +49,7 @@ class RelTools:
         qe_formulas = []
         for _, an in self._nxnode2archnode.items():
             qe_formulas.append(And(an.get_qe_formulas()))
-        return And(qe_formulas)
+        return And(And(qe_formulas), self.linker_constr)
 
     def apply_allsmt(self):
         to_keep_atoms = []
@@ -134,10 +134,21 @@ if __name__ == "__main__":
     r = RelTools(g)
     r.apply_allsmt()
     print("Linker constraints")
-    print(r.linker_constr)
+    print(r.linker_constr.serialize())
     print("Compatibility constraints")
     print(r.compatibility_constr)
     print("Configurations formula")
     print(r.conf_formula)
     print("Probability constraints")
     print(r.prob_constr)
+
+# (((! 'CONF_C2[0]') ->                         True) &
+# ((((! 'CONF_C1[0]') & (! 'CONF_C1[1]')) -> (  ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
+#                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
+#                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
+# (((! 'CONF_C1[0]') & 'CONF_C1[1]') -> (       ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
+#                                               ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
+#                                               ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
+# (('CONF_C1[0]' & (! 'CONF_C1[1]')) -> (       ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
+#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
+#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2')))))

@@ -12,6 +12,7 @@ class ComponentType(Enum):
     CONCRETIZER = 5,
     ABSTRACTOR = 6
     CSA = 7
+    TLE = 8
 
 
 class Component:

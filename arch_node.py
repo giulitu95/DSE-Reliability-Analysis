@@ -103,16 +103,19 @@ class ArchNode:
                         # iterate over the csa of the next archnode
                         if len(current_csa.output_ports) == 1:
                             # if the csa has only one output, then it can be connected with every next csa
-                            for in_port in next_csa.input_ports:
+                            to_connect_ports = next_csa.get_update_available_ports()
+                            for in_port in to_connect_ports:
                                 comp2comp_constr.append(Iff(current_csa.output_ports[0], in_port))
-                        elif len(current_csa.output_ports) == len(next_csa.input_ports):
+                        elif len(current_csa.output_ports) == next_csa.comp_n_inputs:
                             # if 2 csa have compatible outputs-inputs then, they can be connected together
-                            for idx in range(len(current_csa.output_ports)):
+                            to_connect_ports = next_csa.get_update_available_ports()
+                            for idx in range(len(to_connect_ports)):
                                 comp2comp_constr.append(Iff(current_csa.output_ports[idx], next_csa.input_ports[idx]))
                         else:
                             # patterns are not sequentially compatible so, add the formula
                             # current_configuration -> ~next_configuration
                             compatibility_constr.append(Implies(conf, Not(next_node.get_conf_by_index(n_idx))))
+                        next_csa.reset_available_ports()
                 linker_constr.append(
                     Implies(
                         conf,
@@ -204,17 +207,23 @@ class ArchNode:
         """
         return self._fault_atoms
 
-# Test - Example
+'''# Test - Example
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    an2 = ArchNode([TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))], "C2", 2)
-    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))],
-                   "C1", 1, next_archnodes=[an2])
+    an4 = ArchNode([TmrV111Spec("TMR_V111_A",
+                                [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
+                                NonFuncParamas(0.1))], "C4", 3)
+    an1 = ArchNode([TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))], "C1", 1, next_archnodes=[an4])
+    an2 = ArchNode([TmrV111Spec("TMR_V111_A",[NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],NonFuncParamas(0.1))], "C2", 1, next_archnodes=[an4])
+    an3 = ArchNode([TmrV111Spec("TMR_V111_A",
+                                [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
+                                NonFuncParamas(0.1))], "C3", 1, next_archnodes=[an4])
+
+
 
     qe1 = an1.get_qe_formulas()
-    qe2 = an2.get_qe_formulas()
+    qe2 = an2.get_qe_formulas()'''
+
 
 
