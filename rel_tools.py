@@ -1,7 +1,7 @@
 import networkx as nx
 from arch_node import ArchNode
 from pysmt.shortcuts import *
-
+import mathsat
 
 class RelTools:
     """
@@ -42,7 +42,7 @@ class RelTools:
         self._conf_formula = And(conf_formulas)
         self._prob_constr = And(prob_constr)
 
-    def get_qe_formula(self):
+    def __get_qe_formula(self):
         """
         :return: A boolena formula representing the architecture
         """
@@ -50,6 +50,37 @@ class RelTools:
         for _, an in self._nxnode2archnode.items():
             qe_formulas.append(And(an.get_qe_formulas()))
         return And(qe_formulas)
+
+    def apply_allsmt(self):
+        to_keep_atoms = []
+        for _, an in self._nxnode2archnode.items():
+            to_keep_atoms.extend(an.fault_atoms)
+            to_keep_atoms.extend(an.conf_atoms)
+        print("[Architecture] Compute qe of each CSA")
+        formula = self.__get_qe_formula()
+        # Define callback called each time mathsat finds a new model
+        def callback(model, converter, result):
+            # Convert back the mathsat model to a pySMT formula
+            py_model = [converter.back(v) for v in model]
+            # Append the module to the result list
+            # print(py_model)
+            result.append(And(py_model))
+            return 1  # go on
+            # Create a msat converter
+        msat = Solver(name="msat")
+        converter = msat.converter
+        # add the csa formula to the solver
+        msat.add_assertion(formula)
+        result = []
+        # Directly invoke mathsat APIs
+        print("[Architecture] Compute allSMT On the entire formula")
+        mathsat.msat_all_sat(msat.msat_env(),
+                             [converter.convert(atom) for atom in to_keep_atoms],
+                             # Convert the pySMT term into a MathSAT term
+                             lambda model: callback(model, converter, result))
+        res_formula =  Or(result)
+        print("[Architecture] Done!")
+        return res_formula
 
     @property
     def f_atoms2prob(self):
@@ -101,9 +132,7 @@ if __name__ == "__main__":
                       ("C2", {'pt_library': pt_lib2})])
     g.add_edge('C1', 'C2')
     r = RelTools(g)
-    qe = r.get_qe_formula()
-    print("Qe formula:")
-    print(qe)
+    r.apply_allsmt()
     print("Linker constraints")
     print(r.linker_constr)
     print("Compatibility constraints")

@@ -190,6 +190,19 @@ class ArchNode:
         """
         return self._f_atoms2prob
 
+    @property
+    def conf_atoms(self):
+        """
+        :return: The list of configuration atoms
+        """
+        return self._conf_atoms
+
+    @property
+    def fault_atoms(self):
+        """
+        :return: The list of fault atoms
+        """
+        return self._fault_atoms
 
 # Test - Example
 from patterns import TmrV111Spec
