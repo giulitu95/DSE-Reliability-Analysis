@@ -12,17 +12,18 @@ class RelTools:
         The constructor accepts the architecture's graph representing the topology of the architecture
         :param
         arch_graph: networkx graph describing the connections between components. The index of the node corresponds
-        to its name. Each node has to have an attribute pt_library where a library of pattern is specified
+        to its name. Each node has a type: 'COMP' or 'SOURCE'. COMP type indicates that the node represents a component
+        while SOURCE indicates that the node represents a source of "data", this type of node is used to connect the
+        first nodes of the architecture.
+        Each COMP node has to have an attribute pt_library where a library of pattern is specified.
         """
         self._arch_graph = arch_graph
         self._nxnode2archnode = {}
         # create all archnodes
         for node in nx.dfs_postorder_nodes(arch_graph):
-            if node not in self._nxnode2archnode:
+            if node not in self._nxnode2archnode and arch_graph.nodes[node]['type'] == 'COMP':
                 an_successors = [self._nxnode2archnode[succ] for succ in arch_graph.successors(node)]
-                # TODO: fix this!!!
-                if len(list(arch_graph.predecessors(node))) == 0: n_pred = 1
-                else: n_pred = len(list(arch_graph.predecessors(node)))
+                n_pred = len(list(arch_graph.predecessors(node)))
                 an = ArchNode(arch_graph.nodes[node]['pt_library'], node,  n_pred, an_successors)
                 self._nxnode2archnode[node] = an
         # Import all formulas from each ardch node
@@ -128,8 +129,10 @@ if __name__ == "__main__":
                     TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
 
     g = nx.DiGraph()
-    g.add_nodes_from([("C1", {'pt_library': pt_lib1}),
-                      ("C2", {'pt_library': pt_lib2})])
+    g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
+                        ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib2})])
+    g.add_edge('S1', 'C1')
     g.add_edge('C1', 'C2')
     r = RelTools(g)
     r.apply_allsmt()

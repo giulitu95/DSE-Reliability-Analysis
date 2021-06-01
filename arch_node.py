@@ -56,7 +56,7 @@ class ArchNode:
             self._f_atoms2prob[f_atom] = Symbol("p" + str(f_idx) + "_" + comp_name, REAL)
 
         # - prepare list of csa for each possible pattern-combination
-        # - assign non functional parameters to the probability symbol
+        # - assign non functional parameters to the probability symbols
         for idx, pt in enumerate(pt_library):
             conf = self.get_conf_by_index(idx)
             if pt.pt_type == PatternType.TMR_V111:
