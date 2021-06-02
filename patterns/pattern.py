@@ -12,6 +12,7 @@ class PatternType(Enum):
     DPX_HM = 3
     XooY_3oo4 = 4
     XooY_3oo5 = 5
+    XooY_4oo6 = 6
     # ...
 
 
