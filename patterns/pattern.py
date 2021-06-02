@@ -7,9 +7,26 @@ class PatternType(Enum):
     """
     Enum which determines the type of pattern (e.g. TMR_V111, TRM_V123, DPX...)
     """
-    TMR_V111 = 1
-    TMR_V123 = 2
-    # ...
+    DPX_HM     = 1
+    TMR_V111   = 2
+    TMR_V111x3 = 3    
+    TMR_V001   = 4
+    TMR_V010   = 5
+    TMR_V100   = 6
+    TMR_V011   = 7
+    TMR_V101   = 8
+    TMR_V110   = 9
+    TMR_V122   = 10
+    TMR_V112   = 11
+    TMR_V120   = 12
+    TMR_V102   = 13
+    TMR_V012   = 14   
+    TMR_V123   = 15         
+    XooY_3oo4  = 16
+    XooY_3oo5  = 17
+    XooY_4oo6  = 18
+    XooY_4oo7  = 19
+    # add patterns here...
 
 
 class PatternDefinition:
@@ -29,6 +46,14 @@ class PatternDefinition:
         self._comp_name = comp_name
         self._comp_n_inputs = comp_n_inputs
         self._pt_name = pt_name
+
+    @abc.abstractmethod
+    def get_dummy_definition(self) -> 'PatternDefinition':
+        """
+        Returns a pattern which is applied on a dummy component
+        :return: The definition of the pattern
+        """
+        pass
 
     @abc.abstractmethod
     def create(self, nominal_mod_beh) -> 'Pattern':
