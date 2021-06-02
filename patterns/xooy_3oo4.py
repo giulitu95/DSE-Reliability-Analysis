@@ -4,10 +4,9 @@ from components.voter_v2 import Voter_v2
 from pysmt.shortcuts import *
 from components import voter_v2
 
-
 class XooY_3oo4_Definition(PatternDefinition):
     """
-    Definition for pattern 3-oo-4
+    Definition for pattern 3-o-o-4
     """
     def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
         """
@@ -24,7 +23,7 @@ class XooY_3oo4_Definition(PatternDefinition):
         self._pt_name = pt_name
 
     def get_dummy_definition(self) -> 'TmrV123Definition':
-        return XooY_3oo4_Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(3)], Symbol("EMPTY_F4"))
+        return XooY_3oo4_Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(4)], Symbol("EMPTY_F4"))
 
     def create(self, nominal_mod_beh) -> Pattern:        
         return XooY_3oo4(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
@@ -47,15 +46,15 @@ class XooY_3oo4_Definition(PatternDefinition):
 
 class XooY_3oo4(Pattern):
     """
-    Represent a pattern of type tmr-v123
+    Represent a pattern of type 3-o-o-4
     """
     n_f_atoms = 6
     def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
         """
-        Creata TMR-V111 pattern
+        Create 3-o-o-4 pattern
         :param comp_name: name of the component to which the pattern has to be applied
         :param comp_n_inputs: number of inputs of the component to which the pattern has to be applied
-        :param modules_fault_atoms: list of fault atoms associated to the 3 modules
+        :param modules_fault_atoms: list of fault atoms associated to the 4 modules
         :param voter_fault_atom: fault atom associated to the voter
         :param nominal_mod_beh: nominal behavior of the modules
         """
