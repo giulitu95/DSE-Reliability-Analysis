@@ -13,6 +13,7 @@ class PatternType(Enum):
     XooY_3oo4 = 4
     XooY_3oo5 = 5
     XooY_4oo6 = 6
+    XooY_4oo7 = 7
     # ...
 
 
