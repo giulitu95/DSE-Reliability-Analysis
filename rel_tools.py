@@ -57,7 +57,7 @@ class RelTools:
         qe_formulas = []
         for _, an in self._nxnode2archnode.items():
             qe_formulas.append(And(an.get_qe_formulas()))
-        return And(And(qe_formulas), self.linker_constr)
+        return And(qe_formulas)
 
     def apply_allsmt(self):
         to_keep_atoms = []
@@ -67,27 +67,30 @@ class RelTools:
         print("[Architecture] Compute qe of all CSA")
         formula = self.__get_qe_formula()
         # Define callback called each time mathsat finds a new model
-        def callback(model, converter, result):
+        def callback(model, converter, result, i):
             # Convert back the mathsat model to a pySMT formula
             py_model = [converter.back(v) for v in model]
             # Append the module to the result list
             # print(py_model)
             result.append(And(py_model))
+            i[0] = i[0]+1
+            #print(i[0], end="\r")
             return 1  # go on
             # Create a msat converter
         msat = Solver(name="msat")
         converter = msat.converter
         # add the csa formula to the solver
-        msat.add_assertion(formula)
+        msat.add_assertion(And([formula, self._linker_constr, self._conf_formula]))
         result = []
+        i = [0] #tmp
         # Directly invoke mathsat APIs
         print("[Architecture] Compute allSMT On the entire formula...")
         mathsat.msat_all_sat(msat.msat_env(),
                              [converter.convert(atom) for atom in to_keep_atoms],
                              # Convert the pySMT term into a MathSAT term
-                             lambda model: callback(model, converter, result))
+                             lambda model: callback(model, converter, result, i))
         res_formula =  Or(result)
-        print("[Architecture] Done!")
+        print("[Architecture] Done! " + str(i[0]) + " models found")
         return res_formula
 
     @property
@@ -126,23 +129,32 @@ class RelTools:
         return self._prob_constr
 
 
-'''# Test - Example
+# Test - Example
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    pt_lib2 = [TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
-    pt_lib1 = [TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+    pt_lib1 = [     TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib2 = [     TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
                     TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
 
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
+                        ("S2", {'type': 'SOURCE'}),
+                        ("S3", {'type': 'SOURCE'}),
                         ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib2})])
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C3", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C4", {'type': 'COMP', 'pt_library': pt_lib2})])
     g.add_edge('S1', 'C1')
-    g.add_edge('C1', 'C2')
+    g.add_edge('S2', 'C2')
+    g.add_edge('S3', 'C3')
+    g.add_edge('C1', 'C4')
+    g.add_edge('C2', 'C4')
+    g.add_edge('C3', 'C4')
+
     r = RelTools(g)
     f = r.apply_allsmt()
+
     print("Linker constraints")
     print(r.linker_constr.serialize())
     print("Compatibility constraints")
@@ -154,27 +166,33 @@ if __name__ == "__main__":
     #print("~~~~~~~")
     #print(f.serialize())
 
-# LINKER CONSTRAINTS:
-# Inputs are nominal!
 # (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
-# ('[C1-TMR_V111_B].concr.i0' & '[C1-TMR_V111_B].concr.i1' & '[C1-TMR_V111_B].concr.i2') &
-# ('[C1-TMR_V111_C].concr.i0' & '[C1-TMR_V111_C].concr.i1' & '[C1-TMR_V111_C].concr.i2') &
+# ('[C2-TMR_V111_A].concr.i0' & '[C2-TMR_V111_A].concr.i1' & '[C2-TMR_V111_A].concr.i2') &
+# ('[C3-TMR_V111_A].concr.i0' & '[C3-TMR_V111_A].concr.i1' & '[C3-TMR_V111_A].concr.i2') &
+# ((! 'CONF_C4[0]') -> (! '[C4-TMR_V111_A].abstr.o0')) &
 
-# TLE
-# ((! 'CONF_C2[0]') -> (! '[C2-TMR_V111_A].abstr.o0')) &
+# ((! 'CONF_C1[0]') -> (    ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
+#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
+#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
+# ((! 'CONF_C2[0]') ->      (('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
+#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
+#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
+# ((! 'CONF_C3[0]') ->      (('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
+#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
+#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))))
 
-# Linkers
-# ((((! 'CONF_C1[0]') & (! 'CONF_C1[1]')) -> (  ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
-#                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
-#                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
-# (((! 'CONF_C1[0]') & 'CONF_C1[1]') -> (       ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
-#                                               ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
-#                                               ('[C1-TMR_V111_B].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
-# (('CONF_C1[0]' & (! 'CONF_C1[1]')) -> (       ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
-#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
-#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2')))))
-#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2')))))
 
-# CONFIGURATIONS FORMULA
-# ((! 'CONF_C2[0]') &
-# (! ('CONF_C1[0]' & 'CONF_C1[1]')))'''
+# (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
+# ('[C2-TMR_V111_A].concr.i0' & '[C2-TMR_V111_A].concr.i1' & '[C2-TMR_V111_A].concr.i2') &
+# ('[C3-TMR_V111_A].concr.i0' & '[C3-TMR_V111_A].concr.i1' & '[C3-TMR_V111_A].concr.i2') &
+
+# ((! 'CONF_C4[0]') -> (! '[C4-TMR_V111_A].abstr.o0')) &
+# ((! 'CONF_C1[0]') -> (    ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
+#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
+#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
+# ((! 'CONF_C2[0]') -> (    ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i1') &
+#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i4') &
+#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i7'))) &
+# ((! 'CONF_C3[0]') -> (    ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i2') &
+#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i5') &
+#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i8'))))

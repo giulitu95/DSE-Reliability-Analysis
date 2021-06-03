@@ -115,7 +115,6 @@ class ArchNode:
                             # patterns are not sequentially compatible so, add the formula
                             # current_configuration -> ~next_configuration
                             compatibility_constr.append(Implies(conf, Not(next_node.get_conf_by_index(n_idx))))
-                        next_csa.reset_available_ports()
                 linker_constr.append(
                     Implies(
                         conf,
