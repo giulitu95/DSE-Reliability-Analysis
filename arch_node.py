@@ -85,13 +85,13 @@ class ArchNode:
 
         self._prob_constraints = And(prob_constraints)
 
-        # Constraints which describe the connections between components
-        self._linker_constr = None
+        # Constraints which describe the connections between components (no constraints is equivalent to the True constraint)
+        self._linker_constr = TRUE()
         # They say whether a pattern (configuration) con be linked to another pattern (configuration)
-        self._compatibility_constr = None
-        if next_archnodes is not None:
+        self._compatibility_constr = TRUE()
+        linker_constr = []
+        if next_archnodes :
             # link the csa of the current node with the csa of the next node
-            linker_constr = []
             compatibility_constr = []
             for c_idx, current_csa in enumerate(self._csa_list):
                 # iterate over the current csa
@@ -122,11 +122,17 @@ class ArchNode:
                         And(comp2comp_constr)
                     )
                 )
-            self._linker_constr = And(linker_constr)
             self._compatibility_constr = And(compatibility_constr)
         else:
             # It is the last node! (tle)
-            pass
+            for idx, csa in enumerate(self._csa_list):
+                conf = self.get_conf_by_index(idx)
+                linker_constr.append(Implies(
+                    conf,
+                    Not(And(csa.output_ports))
+                ))
+
+        self._linker_constr = And(linker_constr)
 
     def get_qe_formulas(self) -> list:
         """
