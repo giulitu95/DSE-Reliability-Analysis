@@ -222,15 +222,17 @@ if __name__ == "__main__":
     print(c.get_update_available_ports())
     print(c.get_update_available_ports())
     print(c.get_update_available_ports())
-# (((((! F0) -> (C1.TMR_V111.M0.o0 = C1_nom.beh(C1.TMR_V111.M0.i0, C1.TMR_V111.M0.i1))) & 
-# ((! F1) -> (C1.TMR_V111.M1.o0 = C1_nom.beh(C1.TMR_V111.M1.i0, C1.TMR_V111.M1.i1))) & 
-# ((! F2) -> (C1.TMR_V111.M2.o0 = C1_nom.beh(C1.TMR_V111.M2.i0, C1.TMR_V111.M2.i1))) & 
-# ((! F3) -> (((C1.TMR_V111.M0.o0 = C1.TMR_V111.M1.o0) | (C1.TMR_V111.M0.o0 = C1.TMR_V111.M2.o0)) ? (C1.TMR_V111.V.o0 = C1.TMR_V111.M0.o0) : ((C1.TMR_V111.M1.o0 = C1.TMR_V111.M2.o0) -> (C1.TMR_V111.V.o0 = C1.TMR_V111.M1.o0))))) & 
-# (C1_nom.o0 = C1_nom.beh(C1_nom.i0, C1_nom.i1))) & 
-# (('[C1-TMR_V111].concr.i0' <-> (C1.TMR_V111.M0.i0 = C1_nom.i0)) & 
-# ('[C1-TMR_V111].concr.i1' <-> (C1.TMR_V111.M0.i1 = C1_nom.i1)) & 
-# ('[C1-TMR_V111].concr.i2' <-> (C1.TMR_V111.M1.i0 = C1_nom.i0)) & 
-# ('[C1-TMR_V111].concr.i3' <-> (C1.TMR_V111.M1.i1 = C1_nom.i1)) & 
-# ('[C1-TMR_V111].concr.i4' <-> (C1.TMR_V111.M2.i0 = C1_nom.i0)) & 
-# ('[C1-TMR_V111].concr.i5' <-> (C1.TMR_V111.M2.i1 = C1_nom.i1))) & 
-# ((C1.TMR_V111.V.o0 = C1_nom.o0) <-> '[C1-TMR_V111].abstr.o0'))'''
+# # (((((! F0) -> (C1.TMR_V111.M0.o0 = C1_nom.beh(C1.TMR_V111.M0.i0, C1.TMR_V111.M0.i1))) & 
+# # ((! F1) -> (C1.TMR_V111.M1.o0 = C1_nom.beh(C1.TMR_V111.M1.i0, C1.TMR_V111.M1.i1))) & 
+# # ((! F2) -> (C1.TMR_V111.M2.o0 = C1_nom.beh(C1.TMR_V111.M2.i0, C1.TMR_V111.M2.i1))) & 
+# # ((! F3) -> (((C1.TMR_V111.M0.o0 = C1.TMR_V111.M1.o0) | (C1.TMR_V111.M0.o0 = C1.TMR_V111.M2.o0)) ? (C1.TMR_V111.V.o0 = C1.TMR_V111.M0.o0) : ((C1.TMR_V111.M1.o0 = C1.TMR_V111.M2.o0) -> (C1.TMR_V111.V.o0 = C1.TMR_V111.M1.o0))))) & 
+# # (C1_nom.o0 = C1_nom.beh(C1_nom.i0, C1_nom.i1))) & 
+# # (('[C1-TMR_V111].concr.i0' <-> (C1.TMR_V111.M0.i0 = C1_nom.i0)) & 
+# # ('[C1-TMR_V111].concr.i1' <-> (C1.TMR_V111.M0.i1 = C1_nom.i1)) & 
+# # ('[C1-TMR_V111].concr.i2' <-> (C1.TMR_V111.M1.i0 = C1_nom.i0)) & 
+# # ('[C1-TMR_V111].concr.i3' <-> (C1.TMR_V111.M1.i1 = C1_nom.i1)) & 
+# # ('[C1-TMR_V111].concr.i4' <-> (C1.TMR_V111.M2.i0 = C1_nom.i0)) & 
+# # ('[C1-TMR_V111].concr.i5' <-> (C1.TMR_V111.M2.i1 = C1_nom.i1))) & 
+# # ((C1.TMR_V111.V.o0 = C1_nom.o0) <-> '[C1-TMR_V111].abstr.o0'))'''
+
+

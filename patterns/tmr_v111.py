@@ -75,15 +75,11 @@ class TmrV111(Pattern):
         self._behaviour_formula = And(subcomp_beh_formula)
 
 
-'''
-# Test - Example
-if __name__ == "__main__":
-    tmr = TmrV111("C1", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2")], Symbol("F3"))
-    print(tmr.behaviour_formula.serialize())
 
-    # Output
-    # (((! F0) -> (C1.TMR_V111.M0.o0 = C1.TMR_V111.M0.beh(C1.TMR_V111.M0.i0))) & 
-    # ((! F1) -> (C1.TMR_V111.M1.o0 = C1.TMR_V111.M1.beh(C1.TMR_V111.M1.i0))) & 
-    # ((! F2) -> (C1.TMR_V111.M2.o0 = C1.TMR_V111.M2.beh(C1.TMR_V111.M2.i0))) & 
-    # ((! F3) -> (((C1.TMR_V111.M0.o0 = C1.TMR_V111.M1.o0) | (C1.TMR_V111.M0.o0 = C1.TMR_V111.M2.o0)) ? (C1.TMR_V111.V.o0 = C1.TMR_V111.M0.o0) : ((C1.TMR_V111.M1.o0 = C1.TMR_V111.M2.o0) -> (C1.TMR_V111.V.o0 = C1.TMR_V111.M1.o0)))))
-'''
+'''# Test - Example
+if __name__ == "__main__":
+    nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
+    tmr = TmrV111("C1", "TMR_V111_A", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2")], Symbol("F3"), nominal_beh)
+    print(tmr.behaviour_formula.serialize())'''
+
+

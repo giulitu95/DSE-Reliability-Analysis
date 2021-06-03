@@ -22,6 +22,7 @@ class RelTools:
         self._nxnode2archnode = {}
         # create all archnodes
         linker_constr = []
+        print("[Architecture] Initialize all csa")
         for node in nx.dfs_postorder_nodes(arch_graph):
             if node not in self._nxnode2archnode and arch_graph.nodes[node]['type'] == 'COMP':
                 an_successors = [self._nxnode2archnode[succ] for succ in arch_graph.successors(node)]
@@ -63,7 +64,7 @@ class RelTools:
         for _, an in self._nxnode2archnode.items():
             to_keep_atoms.extend(an.fault_atoms)
             to_keep_atoms.extend(an.conf_atoms)
-        print("[Architecture] Compute qe of each CSA")
+        print("[Architecture] Compute qe of all CSA")
         formula = self.__get_qe_formula()
         # Define callback called each time mathsat finds a new model
         def callback(model, converter, result):
@@ -80,7 +81,7 @@ class RelTools:
         msat.add_assertion(formula)
         result = []
         # Directly invoke mathsat APIs
-        print("[Architecture] Compute allSMT On the entire formula")
+        print("[Architecture] Compute allSMT On the entire formula...")
         mathsat.msat_all_sat(msat.msat_env(),
                              [converter.convert(atom) for atom in to_keep_atoms],
                              # Convert the pySMT term into a MathSAT term
@@ -125,7 +126,7 @@ class RelTools:
         return self._prob_constr
 
 
-# Test - Example
+'''# Test - Example
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
@@ -150,13 +151,19 @@ if __name__ == "__main__":
     print(r.conf_formula)
     print("Probability constraints")
     print(r.prob_constr)
-    print("~~~~~~~")
-    print(f.serialize())
+    #print("~~~~~~~")
+    #print(f.serialize())
 
+# LINKER CONSTRAINTS:
+# Inputs are nominal!
 # (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
 # ('[C1-TMR_V111_B].concr.i0' & '[C1-TMR_V111_B].concr.i1' & '[C1-TMR_V111_B].concr.i2') &
 # ('[C1-TMR_V111_C].concr.i0' & '[C1-TMR_V111_C].concr.i1' & '[C1-TMR_V111_C].concr.i2') &
-# ((! 'CONF_C2[0]') -> True) &
+
+# TLE
+# ((! 'CONF_C2[0]') -> (! '[C2-TMR_V111_A].abstr.o0')) &
+
+# Linkers
 # ((((! 'CONF_C1[0]') & (! 'CONF_C1[1]')) -> (  ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
 #                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
 #                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
@@ -166,3 +173,8 @@ if __name__ == "__main__":
 # (('CONF_C1[0]' & (! 'CONF_C1[1]')) -> (       ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
 #                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
 #                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2')))))
+#                                               ('[C1-TMR_V111_C].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2')))))
+
+# CONFIGURATIONS FORMULA
+# ((! 'CONF_C2[0]') &
+# (! ('CONF_C1[0]' & 'CONF_C1[1]')))'''
