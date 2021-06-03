@@ -3,6 +3,7 @@ from arch_node import ArchNode
 from pysmt.shortcuts import *
 import mathsat
 
+
 class RelTools:
     """
     Class where all the needed formulas are created.
@@ -20,14 +21,19 @@ class RelTools:
         self._arch_graph = arch_graph
         self._nxnode2archnode = {}
         # create all archnodes
+        linker_constr = []
         for node in nx.dfs_postorder_nodes(arch_graph):
             if node not in self._nxnode2archnode and arch_graph.nodes[node]['type'] == 'COMP':
                 an_successors = [self._nxnode2archnode[succ] for succ in arch_graph.successors(node)]
                 n_pred = len(list(arch_graph.predecessors(node)))
                 an = ArchNode(arch_graph.nodes[node]['pt_library'], node,  n_pred, an_successors)
                 self._nxnode2archnode[node] = an
+            elif arch_graph.nodes[node]['type'] == "SOURCE":
+                # Input of the architecture must be nominal
+                for succ in arch_graph.successors(node):
+                    for csa in self._nxnode2archnode[succ].csa_list:
+                        linker_constr.append(And(csa.input_ports))
         # Import all formulas from each ardch node
-        linker_constr = []
         compatibility_constr = []
         conf_formulas = []
         prob_constr = []
@@ -135,7 +141,7 @@ if __name__ == "__main__":
     g.add_edge('S1', 'C1')
     g.add_edge('C1', 'C2')
     r = RelTools(g)
-    r.apply_allsmt()
+    f = r.apply_allsmt()
     print("Linker constraints")
     print(r.linker_constr.serialize())
     print("Compatibility constraints")
@@ -144,8 +150,13 @@ if __name__ == "__main__":
     print(r.conf_formula)
     print("Probability constraints")
     print(r.prob_constr)
+    print("~~~~~~~")
+    print(f.serialize())
 
-# (((! 'CONF_C2[0]') ->                         True) &
+# (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
+# ('[C1-TMR_V111_B].concr.i0' & '[C1-TMR_V111_B].concr.i1' & '[C1-TMR_V111_B].concr.i2') &
+# ('[C1-TMR_V111_C].concr.i0' & '[C1-TMR_V111_C].concr.i1' & '[C1-TMR_V111_C].concr.i2') &
+# ((! 'CONF_C2[0]') -> True) &
 # ((((! 'CONF_C1[0]') & (! 'CONF_C1[1]')) -> (  ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i0') &
 #                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i1') &
 #                                               ('[C1-TMR_V111_A].abstr.o0' <-> '[C2-TMR_V111_A].concr.i2'))) &
