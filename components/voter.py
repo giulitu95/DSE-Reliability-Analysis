@@ -10,7 +10,7 @@ class Voter(Component):
         :param name: name of voter
         :param faulty_atom: symbol used to indicate whether the voter is faulty
         :param input_ports: list of symbols corresponding to the voter's input ports
-        :param outpu_ports: lsit of symbols corresponding to the voter's output ports
+        :param output_port: symbol corresponding to the voter's output port
         """
         self._fault_atom = fault_atom
         # Define input and output ports
@@ -22,7 +22,7 @@ class Voter(Component):
             output_port = [Symbol(name + ".o0", REAL)]
 
         super(Voter, self).__init__(name, ComponentType.VOTER, input_ports, output_port, fault_atoms=[fault_atom])
-        # Define nominal behaviour
+        # Define nominal behavior
         nom_behaviour = And(
             Ite(
                 Or(
@@ -51,7 +51,7 @@ class Voter(Component):
                 )
             )
         )
-        # if faulty atom is false, then the bheaviour is nominal
+        # if faulty atom is false, then the behavior is nominal
         self._behaviour_formula = Implies(
                 Not(self._fault_atom),
                 nom_behaviour

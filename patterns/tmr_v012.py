@@ -4,13 +4,13 @@ from components.voter import Voter
 from pysmt.shortcuts import *
 
 
-class TmrV123Definition(PatternDefinition):
+class TmrV012Definition(PatternDefinition):
     """
-    Definition for pattern TMR-V123
+    Definition for pattern TMR-V012
     """
     def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_f_atoms: list, voters_f_atoms: list):
         """
-        Create a definition for pattern TMRV123
+        Create a definition for pattern TMRV012
         :param comp_name: name of the component
         :param comp_n_inputs: number of component's inputs
         :param modules_f_atoms: list of fault atoms of the pattern
@@ -20,14 +20,14 @@ class TmrV123Definition(PatternDefinition):
         assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, a correct number of fault atoms"
         self._voters_f_atoms = voters_f_atoms
         assert len(voters_f_atoms) == 3, "[" + pt_name + "] pattern has 3 voters, a correct number of fault atoms"
-        super(TmrV123Definition, self).__init__(comp_name, pt_name, comp_n_inputs, modules_f_atoms + voters_f_atoms, PatternType.TMR_V123)
+        super(TmrV012Definition, self).__init__(comp_name, pt_name, comp_n_inputs, modules_f_atoms + voters_f_atoms, PatternType.TMR_V012)
         self._pt_name = pt_name
 
-    def get_dummy_definition(self) -> 'TmrV123Definition':
-        return TmrV123Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(3)], [Symbol("EMPTY_F" + str(idx+3)) for idx in range(3)])
+    def get_dummy_definition(self) -> 'TmrV012Definition':
+        return TmrV012Definition("EMPTY", self.comp_n_inputs, [Symbol("EMPTY_F" + str(idx)) for idx in range(3)], [Symbol("EMPTY_F" + str(idx+3)) for idx in range(3)])
 
     def create(self, nominal_mod_beh) -> Pattern:
-        return TmrV123(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voters_f_atoms, nominal_mod_beh)
+        return TmrV012(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voters_f_atoms, nominal_mod_beh)
 
     @property
     def modules_f_atoms(self) -> list:
@@ -45,14 +45,14 @@ class TmrV123Definition(PatternDefinition):
 
 
 
-class TmrV123(Pattern):
+class TmrV012(Pattern):
     """
-    Represent a pattern of type tmr-v123
+    Represent a pattern of type tmr-v012
     """
-    n_f_atoms = 6
+    n_f_atoms = 5
     def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_fault_atoms: list, voters_fault_atoms: list, nominal_mod_beh: Symbol):
         """
-        Creata TMR-V123 pattern
+        Creata TMR-V012 pattern
         :param comp_name: name of the component to which the pattern has to be applied
         :param comp_n_inputs: number of inputs of the component to which the pattern has to be applied
         :param modules_fault_atoms: list of fault atoms associated to the 3 modules
@@ -67,14 +67,16 @@ class TmrV123(Pattern):
         for module in modules:
             modules_out_ports.extend(module.output_ports)
         assert len(modules_out_ports) == 3, "[" + pattern_name + "] The voters must have 3 inputs"
-        voters = [Voter(pattern_name + ".V" + str(idx), voters_fault_atoms[idx], input_ports=modules_out_ports) for idx in range(3)]
+        voters = [Voter(pattern_name + ".V" + str(idx), voters_fault_atoms[idx], input_ports=modules_out_ports) for idx in range(2)]
 
-        # Output of the pattern corresponds to the output ports of the voters
+        # Output1: output port of Module 1, Output2: output port of Voter 1, output 3: output port of voter 2   
         output_ports = []
-        for voter in voters:
-            output_ports.extend(voter.output_ports)
+        fan_out=(module[0])
+        output_ports.extend(fan_out)
+        output_ports.extend(voters[0].output_ports)        
+        output_ports.extend(voters[1].output_ports)        
         assert len(output_ports) == 3, "[" + pattern_name + "] The pattern must have 3 outputs"                        
-        super(TmrV123, self).__init__(pattern_name, PatternType.TMR_V123, modules_fault_atoms + voters_fault_atoms, modules, output_ports)
+        super(TmrV012, self).__init__(pattern_name, PatternType.TMR_V012, modules_fault_atoms + voters_fault_atoms, modules, output_ports)
 
         # Define behavior formula: And of subcomponents' behaviors
         # Modules

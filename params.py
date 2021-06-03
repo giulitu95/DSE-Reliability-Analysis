@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
 
-class NonFuncParamas(NamedTuple):
+class NonFuncParams(NamedTuple):
     fault_prob: float
-    #cost: float
+    cost: float
