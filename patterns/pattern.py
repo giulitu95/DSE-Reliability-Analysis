@@ -16,7 +16,7 @@ class PatternDefinition:
     """
     Description of a pattern
     """
-    def __init__(self, comp_name: str, pt_name: str,  comp_n_inputs: int, f_atoms: list, pt_type: PatternType):
+    def __init__(self, comp_name: str, comp_n_inputs: int, f_atoms: list, pt_type: PatternType):
         """
         Create the description of a particular pattern
         :param comp_name: name of the component for which the pattern has to be applied
@@ -28,7 +28,6 @@ class PatternDefinition:
         self._pt_type = pt_type
         self._comp_name = comp_name
         self._comp_n_inputs = comp_n_inputs
-        self._pt_name = pt_name
 
     @abc.abstractmethod
     def create(self, nominal_mod_beh) -> 'Pattern':
@@ -66,10 +65,6 @@ class PatternDefinition:
         :return: number of inputs of the components
         """
         return self._comp_n_inputs
-
-    @property
-    def pt_name(self):
-        return self._pt_name
 
 
 class Pattern(Component):

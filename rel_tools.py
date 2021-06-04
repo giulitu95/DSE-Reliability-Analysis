@@ -32,7 +32,7 @@ class RelTools:
             elif arch_graph.nodes[node]['type'] == "SOURCE":
                 # Input of the architecture must be nominal
                 for succ in arch_graph.successors(node):
-                    for csa in self._nxnode2archnode[succ].csa_list:
+                    for csa, _ in self._nxnode2archnode[succ].csa2configs.items():
                         linker_constr.append(And(csa.input_ports))
         # Import all formulas from each ardch node
         compatibility_constr = []
@@ -66,6 +66,7 @@ class RelTools:
             to_keep_atoms.extend(an.conf_atoms)
         print("[Architecture] Compute qe of all CSA")
         formula = self.__get_qe_formula()
+
         # Define callback called each time mathsat finds a new model
         def callback(model, converter, result, i):
             # Convert back the mathsat model to a pySMT formula
@@ -74,9 +75,10 @@ class RelTools:
             # print(py_model)
             result.append(And(py_model))
             i[0] = i[0]+1
-            #print(i[0], end="\r")
+            print(i[0], end="\r")
             return 1  # go on
             # Create a msat converter
+
         msat = Solver(name="msat")
         converter = msat.converter
         # add the csa formula to the solver
@@ -133,24 +135,19 @@ class RelTools:
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    pt_lib1 = [     TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
-    pt_lib2 = [     TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+    pt_lib1 = [     TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+                    TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
                     TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib2 = [     TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
 
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                         ("S2", {'type': 'SOURCE'}),
                         ("S3", {'type': 'SOURCE'}),
                         ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C3", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C4", {'type': 'COMP', 'pt_library': pt_lib2})])
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1})])
     g.add_edge('S1', 'C1')
-    g.add_edge('S2', 'C2')
-    g.add_edge('S3', 'C3')
-    g.add_edge('C1', 'C4')
-    g.add_edge('C2', 'C4')
-    g.add_edge('C3', 'C4')
+    g.add_edge('C1', 'C2')
 
     r = RelTools(g)
     f = r.apply_allsmt()
