@@ -20,6 +20,7 @@ class RelTools:
         """
         self._arch_graph = arch_graph
         self._nxnode2archnode = {}
+        self._conf_atoms = []
         # create all archnodes
         linker_constr = []
         print("[Architecture] Initialize all csa")
@@ -29,6 +30,7 @@ class RelTools:
                 n_pred = len(list(arch_graph.predecessors(node)))
                 an = ArchNode(arch_graph.nodes[node]['pt_library'], node,  n_pred, an_successors)
                 self._nxnode2archnode[node] = an
+                self._conf_atoms.extend(an.conf_atoms)
             elif arch_graph.nodes[node]['type'] == "SOURCE":
                 # Input of the architecture must be nominal
                 for succ in arch_graph.successors(node):
@@ -130,15 +132,18 @@ class RelTools:
         """
         return self._prob_constr
 
+    @property
+    def conf_atoms(self):
+        return self._conf_atoms
 
 # Test - Example
 from patterns import TmrV111Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    pt_lib1 = [     TmrV111Spec("TMR_V111_A", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec("TMR_V111_C", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
-    pt_lib2 = [     TmrV111Spec("TMR_V111_B", [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib1 = [     TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+                    TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
+                    TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib2 = [     TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
 
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
@@ -160,6 +165,8 @@ if __name__ == "__main__":
     print(r.conf_formula)
     print("Probability constraints")
     print(r.prob_constr)
+
+
     #print("~~~~~~~")
     #print(f.serialize())
 
@@ -193,3 +200,12 @@ if __name__ == "__main__":
 # ((! 'CONF_C3[0]') -> (    ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i2') &
 #                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i5') &
 #                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i8'))))
+
+
+
+#(('[C1-TMR_V111].concr.i0' & '[C1-TMR_V111].concr.i1' & '[C1-TMR_V111].concr.i2') &
+
+# ((! 'CONF_C2[0]') -> (! '[C2-TMR_V111].abstr.o0')) &
+# ((! 'CONF_C1[0]') -> (   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
+#                                                                               ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i1') &
+#                                                                               ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i2'))))

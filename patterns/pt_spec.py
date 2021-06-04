@@ -3,21 +3,18 @@ from patterns import PatternType
 
 
 class PatternSpec:
-    def __init__(self, pattern_type, name):
+    def __init__(self, pattern_type):
         self._pt_type = pattern_type
-        self._name = name
 
     @property
     def pt_type(self):
         return self._pt_type
 
-    @property
-    def name(self):
-        return self._name
+
 
 
 class TmrV111Spec(PatternSpec):
-    def __init__(self, name, modules_params: list, voter_param: NonFuncParamas):
+    def __init__(self, modules_params: list, voter_param: NonFuncParamas):
         '''
         Create a specification of a TMR-V111
         :param modules_probs: list of length 3 containing the probabilities of the 3 modules
@@ -25,7 +22,7 @@ class TmrV111Spec(PatternSpec):
         '''
         self._modules_params = modules_params
         self._voter_param = voter_param
-        super(TmrV111Spec, self).__init__(PatternType.TMR_V111, name)
+        super(TmrV111Spec, self).__init__(PatternType.TMR_V111)
 
     @property
     def modules_params(self):

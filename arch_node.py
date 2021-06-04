@@ -58,15 +58,18 @@ class ArchNode:
 
         # - prepare list of csa for each possible pattern-combination
         # - assign non functional parameters to the probability symbols
-        created_pt_types = []
+        pt_type2csa = {}
         for idx, pt in enumerate(pt_library):
             conf = self.get_conf_by_index(idx)
-            if pt.pt_type == PatternType.TMR_V111 and pt.pt_type:
-                if pt.pt_type not in created_pt_types:
+            if pt.pt_type == PatternType.TMR_V111:
+                if pt.pt_type not in pt_type2csa:
                     # create Csa only if a csa of the same pattern has not been created
                     pt_def = TmrV111Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
                     csa = Csa(pt_def)
-                    self._csa2configs[csa].append(conf)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
                 # assign non functional parameters to the probability symbols associated to each fault atoms
                 # modules:
                 for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
@@ -82,7 +85,8 @@ class ArchNode:
                         Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voter_param.fault_prob))
                     )
                 )
-                created_pt_types.append(pt.pt_type)
+
+
             # TODO: do this for all patterns:
             #  elif: pt.pt_type == PatternType.TMR_V123
             #  ...
@@ -216,6 +220,8 @@ class ArchNode:
         :return: The list of fault atoms
         """
         return self._fault_atoms
+
+
 
 '''# Test - Example
 from patterns import TmrV111Spec
