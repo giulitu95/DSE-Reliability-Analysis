@@ -1,6 +1,7 @@
 from patterns import PatternType, TmrV111Definition, TmrV111
 from components.csa import Csa
 from pysmt.shortcuts import *
+from collections import defaultdict
 import math
 
 
@@ -48,7 +49,7 @@ class ArchNode:
         self._conf_formula = And( # Here we exclude invalid configurations
             Not(Or(invalid_conf))
         )
-        self._csa_list = []
+        self._csa2configs = defaultdict(list)
         self._f_atoms2prob = {}
         prob_constraints = []
         # create probability symbols (real)
@@ -57,13 +58,15 @@ class ArchNode:
 
         # - prepare list of csa for each possible pattern-combination
         # - assign non functional parameters to the probability symbols
+        created_pt_types = []
         for idx, pt in enumerate(pt_library):
             conf = self.get_conf_by_index(idx)
-            if pt.pt_type == PatternType.TMR_V111:
-                # create Csa
-                pt_def = TmrV111Definition(comp_name, pt.name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
-                csa = Csa(pt_def)
-                self._csa_list.append(csa)
+            if pt.pt_type == PatternType.TMR_V111 and pt.pt_type:
+                if pt.pt_type not in created_pt_types:
+                    # create Csa only if a csa of the same pattern has not been created
+                    pt_def = TmrV111Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
+                    csa = Csa(pt_def)
+                    self._csa2configs[csa].append(conf)
                 # assign non functional parameters to the probability symbols associated to each fault atoms
                 # modules:
                 for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
@@ -79,6 +82,7 @@ class ArchNode:
                         Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voter_param.fault_prob))
                     )
                 )
+                created_pt_types.append(pt.pt_type)
             # TODO: do this for all patterns:
             #  elif: pt.pt_type == PatternType.TMR_V123
             #  ...
@@ -93,41 +97,42 @@ class ArchNode:
         if next_archnodes :
             # link the csa of the current node with the csa of the next node
             compatibility_constr = []
-            for c_idx, current_csa in enumerate(self._csa_list):
+            for csa, configs in self._csa2configs.items():
                 # iterate over the current csa
                 comp2comp_constr = []
-                conf = self.get_conf_by_index(c_idx)
                 for next_node in next_archnodes:
                     # iterate over the next archnodes
-                    for n_idx, next_csa in enumerate(next_node.csa_list):
+                    for next_csa, next_configs in next_node.csa2configs.items():
                         # iterate over the csa of the next archnode
-                        if len(current_csa.output_ports) == 1:
+                        if len(csa.output_ports) == 1:
                             # if the csa has only one output, then it can be connected with every next csa
                             to_connect_ports = next_csa.get_update_available_ports()
                             for in_port in to_connect_ports:
-                                comp2comp_constr.append(Iff(current_csa.output_ports[0], in_port))
-                        elif len(current_csa.output_ports) == next_csa.comp_n_inputs:
+                                comp2comp_constr.append(Iff(csa.output_ports[0], in_port))
+                        elif len(csa.output_ports) == next_csa.comp_n_inputs:
                             # if 2 csa have compatible outputs-inputs then, they can be connected together
                             to_connect_ports = next_csa.get_update_available_ports()
                             for idx in range(len(to_connect_ports)):
-                                comp2comp_constr.append(Iff(current_csa.output_ports[idx], next_csa.input_ports[idx]))
+                                comp2comp_constr.append(Iff(csa.output_ports[idx], next_csa.input_ports[idx]))
                         else:
                             # patterns are not sequentially compatible so, add the formula
                             # current_configuration -> ~next_configuration
-                            compatibility_constr.append(Implies(conf, Not(next_node.get_conf_by_index(n_idx))))
+                            compatibility_constr.append(
+                                Implies(
+                                    Or(configs),
+                                    Not(Or(next_configs))))
                 linker_constr.append(
                     Implies(
-                        conf,
+                        Or(configs),
                         And(comp2comp_constr)
                     )
                 )
             self._compatibility_constr = And(compatibility_constr)
         else:
             # It is the last node! (tle)
-            for idx, csa in enumerate(self._csa_list):
-                conf = self.get_conf_by_index(idx)
+            for csa, configs in self._csa2configs.items():
                 linker_constr.append(Implies(
-                    conf,
+                    Or(configs),
                     Not(And(csa.output_ports))
                 ))
 
@@ -139,7 +144,7 @@ class ArchNode:
         :return: the list of boolean formula for each csa
         """
         formulas = []
-        for csa in self._csa_list:
+        for csa, _ in self._csa2configs.items():
             formulas.append(csa.get_qe_formula())
         return formulas
 
@@ -157,11 +162,11 @@ class ArchNode:
         return And(conf)
 
     @property
-    def csa_list(self) -> list:
+    def csa2configs(self) -> dict:
         """
         :return: list of csa of the node
         """
-        return self._csa_list
+        return self._csa2configs
 
     @property
     def linker_constr(self):

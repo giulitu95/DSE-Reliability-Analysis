@@ -8,7 +8,7 @@ class TmrV111Definition(PatternDefinition):
     """
     Definition for pattern TMR-V111
     """
-    def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
+    def __init__(self, comp_name: str, comp_n_inputs: int, modules_f_atoms: list, voter_f_atom: Symbol):
         """
         Create a definition for pattern TMRV111
         :param comp_name: name of the component
@@ -17,13 +17,14 @@ class TmrV111Definition(PatternDefinition):
         :param voter_f_atom: fault atom associated to the voter
         """
         self._modules_f_atoms = modules_f_atoms
-        assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, a correct number of fault atoms"
         self._voter_f_atom = voter_f_atom
-        super(TmrV111Definition, self).__init__(comp_name, pt_name, comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
+        super(TmrV111Definition, self).__init__(comp_name,  comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
+        pt_name = self._pt_type.name
+        assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, a correct number of fault atoms"
         self._pt_name = pt_name
 
     def create(self, nominal_mod_beh) -> Pattern:
-        return TmrV111(self._comp_name, self._pt_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
+        return TmrV111(self._comp_name, self._comp_n_inputs, self._modules_f_atoms, self._voter_f_atom, nominal_mod_beh)
 
     @property
     def modules_f_atoms(self) -> list:
@@ -46,7 +47,7 @@ class TmrV111(Pattern):
     """
     n_f_atoms = 4
 
-    def __init__(self, comp_name: str, pt_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
+    def __init__(self, comp_name: str, comp_n_inputs: int, modules_fault_atoms: list, voter_fault_atom: Symbol, nominal_mod_beh: Symbol):
         """
         Creata TMR-V111 pattern
         :param comp_name: name of the component to which the pattern has to be applied
@@ -55,7 +56,7 @@ class TmrV111(Pattern):
         :param voter_fault_atom: fault atom associated to the voter
         :param nominal_mod_beh: nominal behaviour of the modules
         """
-        pattern_name = comp_name + "." + pt_name
+        pattern_name = comp_name + "." + PatternType.TMR_V111.name
         modules = [FaultyModule(pattern_name + ".M" + str(idx), comp_n_inputs, modules_fault_atoms[idx], nominal_mod_beh) for idx in range(3)]
         modules_out_ports = []
         # The output of the modules are the inputs of the voter

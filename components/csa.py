@@ -18,19 +18,19 @@ class Csa(Component):
         Create a Csa
         :param pt_definition: definition of a pattern
         """
-        print("[" + pt_definition.comp_name + "-" + pt_definition.pt_name + "]" + " Initialize CSA")
+        print("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "]" + " Initialize CSA")
         self._pt_definition = pt_definition
         self._stage = Stage(pt_definition)
         self._comp_n_inputs = pt_definition.comp_n_inputs
         # We can also delete this, this is needed only in order to compyte the behaviour formula which actually we don't need
-        self._concretizer = Concretizer("[" + pt_definition.comp_name + "-" + pt_definition.pt_name + "].concr",
+        self._concretizer = Concretizer("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].concr",
                                         pt_definition.comp_n_inputs, self._stage
                                         )
-        self._abstractor = Abstractor("[" + pt_definition.comp_name + "-" + pt_definition.pt_name + "].abstr",
+        self._abstractor = Abstractor("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].abstr",
                                       self._stage
                                       )
 
-        super(Csa, self).__init__("[" + pt_definition.comp_name + "-" + pt_definition.pt_name + "].csa",
+        super(Csa, self).__init__("[" + pt_definition.comp_name + "-" + pt_definition.pt_type.name + "].csa",
                                   ComponentType.CSA, self._concretizer.input_ports,
                                   self._abstractor.output_ports,
                                   fault_atoms=self._stage.fault_atoms
@@ -60,34 +60,34 @@ class Csa(Component):
         Create a behaviour formula of the Csa containing only boolean atoms (faulty atoms, concretizer input ports and abstractor output ports)
         :return: behaviour boolean formula
         """
-        print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Get AllSMT behaviour formula: ")
+        print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Get AllSMT behaviour formula: ")
         file_name = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
         if not os.path.exists(file_name):
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " AllSMT formula is not in cache, performing AllSMT...")
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " AllSMT formula is not in cache, performing AllSMT...")
             formula = self.__apply_qe(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Create dummy AllSMT formula and save it in cache...")
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Create dummy AllSMT formula and save it in cache...")
             dummy_qe_formula = formula.serialize()
             for idx, f_atom in enumerate(self._fault_atoms):
                 dummy_qe_formula = dummy_qe_formula.replace(f_atom.serialize(), "$EMPTY_F$" + str(idx))
-            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.pt_name, self._pt_definition.pt_type.name)
+            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_type.name)
             dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.comp_name, "$EMPTY$")
             # Print formula on file
             with open(file_name, "w") as cache_file:
                 cache_file.write(dummy_qe_formula)
 
         else:
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Formula found in cache")
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Formula found in cache")
             # Import formula from cache
             with open(file_name, "r") as cache_file:
                 dummy_qe_formula_str = cache_file.read()
             # Parse string and extract SMT formula
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Parse formula...")
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Parse formula...")
             formula_str = dummy_qe_formula_str.replace("$EMPTY$", self._pt_definition.comp_name)
             for idx, f_atom in enumerate(self._fault_atoms):
                 formula_str = formula_str.replace("$EMPTY_F$" + str(idx), f_atom.serialize())
-            formula_str = formula_str.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_name)
+            formula_str = formula_str.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_type.name)
             formula = parse(formula_str)
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_name + "]" + " Done!")
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Done!")
             # Check
             # with Solver("z3") as solver:
             #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
