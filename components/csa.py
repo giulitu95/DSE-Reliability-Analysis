@@ -5,6 +5,7 @@ from pysmt.shortcuts import *
 import os
 import mathsat
 from pysmt.parsing import parse
+from allsmt import allsmt
 
 
 class Csa(Component):
@@ -64,7 +65,7 @@ class Csa(Component):
         file_name = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
         if not os.path.exists(file_name):
             print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " AllSMT formula is not in cache, performing AllSMT...")
-            formula = self.__apply_qe(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
+            formula = allsmt(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
             print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Create dummy AllSMT formula and save it in cache...")
             dummy_qe_formula = formula.serialize()
             for idx, f_atom in enumerate(self._fault_atoms):
@@ -92,42 +93,6 @@ class Csa(Component):
             # with Solver("z3") as solver:
             #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
         return formula
-
-    def __apply_qe(self, formula, to_keep_atoms: list):
-        """
-        Apply AllSMT on a formula obtaining a formula which contains only the atoms in to_keep_atoms list
-        :param formula:
-        :param to_keep_atoms:
-        :return:
-        """
-        # Define callback called each time mathsat finds a new model
-        def callback(model, converter, result):
-            # Convert back the mathsat model to a pySMT formula
-            py_model = [converter.back(v) for v in model]
-            # Append the module to the result list
-            #print(py_model)
-            result.append(And(py_model))
-            return 1  # go on
-
-        # Create a msat converter
-        msat = Solver(name="msat")
-        converter = msat.converter
-        # add the csa formula to the solver
-        msat.add_assertion(formula)
-        result = []
-        # Directly invoke mathsat APIs
-        mathsat.msat_all_sat(msat.msat_env(),
-                             [converter.convert(atom) for atom in to_keep_atoms],
-                             # Convert the pySMT term into a MathSAT term
-                             lambda model: callback(model, converter, result))
-        return Or(result)
-
-    @property
-    def comp_n_inputs(self):
-        """
-        :return: numer of input ports of the component where the csa has been applied
-        """
-        return self._comp_n_inputs
 
 
 class Concretizer(Component):
