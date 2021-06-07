@@ -14,7 +14,7 @@ def callback(model, converter, result, model_counter, start_time):
     result.append(And(py_model))
     model_counter[0] = model_counter[0] + 1
     time_diff =  dt.datetime.today().timestamp() - start_time[0]
-    print("[AllSMT] -> " + str(model_counter[0]) + " models [" + str(int(1/time_diff)) + " m/s]", end = "\r", flush=True)
+    print("[AllSMT] -> " + str(model_counter[0]) + " models [" + str(int(1/time_diff)) + " mod/s]", end = "\r", flush=True)
     start_time[0] = dt.datetime.today().timestamp()
     return 1  # go on
 

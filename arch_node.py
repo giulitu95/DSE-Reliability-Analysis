@@ -132,10 +132,10 @@ class ArchNode:
                             # if the csa has only one output, then it can be connected with every next csa
                             for in_port in to_connect_ports:
                                 comp2comp_constr.append(Iff(csa.output_ports[0], in_port))
-                        elif len(csa.output_ports) == len(next_csa.input_ports): # TODO: check this, this is not always correct!
+                        elif len(csa.output_ports) == len(to_connect_ports): # TODO: check this, this is not always correct!
                             # if 2 csa have compatible outputs-inputs then, they can be connected together
                             for idx in range(len(to_connect_ports)):
-                                comp2comp_constr.append(Iff(csa.output_ports[idx], next_csa.input_ports[idx]))
+                                comp2comp_constr.append(Iff(csa.output_ports[idx], to_connect_ports[idx]))
                         else:
                             # patterns are not sequentially compatible so, add the formula
                             # current_configuration -> ~next_configuration
