@@ -1,7 +1,9 @@
 import networkx as nx
 from arch_node import ArchNode
 from pysmt.shortcuts import *
-import mathsat
+from rel_extractor import Extractor
+from allsmt import allsmt
+import repycudd
 
 
 class RelTools:
@@ -61,41 +63,52 @@ class RelTools:
             qe_formulas.append(And(an.get_qe_formulas()))
         return And(qe_formulas)
 
-    def apply_allsmt(self):
+    def apply_arch_allsmt(self):
         to_keep_atoms = []
         for _, an in self._nxnode2archnode.items():
             to_keep_atoms.extend(an.fault_atoms)
             to_keep_atoms.extend(an.conf_atoms)
-        print("[Architecture] Compute qe of all CSA")
+        print("[Architecture] Quantify out non-boolean variables of all CSA")
         formula = self.__get_qe_formula()
+        print("[Architecture] Quantify out input and output ports")
+        cutsets_formula = allsmt(And([formula, self._linker_constr, self._conf_formula]), to_keep_atoms)
 
-        # Define callback called each time mathsat finds a new model
-        def callback(model, converter, result, i):
-            # Convert back the mathsat model to a pySMT formula
-            py_model = [converter.back(v) for v in model]
-            # Append the module to the result list
-            # print(py_model)
-            result.append(And(py_model))
-            i[0] = i[0]+1
-            print(i[0], end="\r")
-            return 1  # go on
-            # Create a msat converter
+        return cutsets_formula
 
-        msat = Solver(name="msat")
-        converter = msat.converter
-        # add the csa formula to the solver
-        msat.add_assertion(And([formula, self._linker_constr, self._conf_formula]))
-        result = []
-        i = [0] #tmp
-        # Directly invoke mathsat APIs
-        print("[Architecture] Compute allSMT On the entire formula...")
-        mathsat.msat_all_sat(msat.msat_env(),
-                             [converter.convert(atom) for atom in to_keep_atoms],
-                             # Convert the pySMT term into a MathSAT term
-                             lambda model: callback(model, converter, result, i))
-        res_formula =  Or(result)
-        print("[Architecture] Done! " + str(i[0]) + " models found")
-        return res_formula
+    def extract_reliability_formula(self):
+        # Create cut-sets formula
+        formula = self.apply_arch_allsmt()
+        bdd = Solver(name="bdd")
+        converter = bdd.converter
+        m1 = bdd.ddmanager
+        bdd_formula = converter.convert(formula)  # converted formula
+        id_var = converter.idx2var
+
+        # Iterate over prime implicants, creating a pySMT formula representing primes
+        # TODO: we could generate a bdd formula directly instead of a pysmt formula
+        repycudd.set_iter_meth(2)
+        conjunctions = []
+        print("[Architecture] Create minimal-cutset formula (fiind PI)...")
+        for prime in repycudd.ForeachPrimeIterator(m1, repycudd.NodePair(bdd_formula, bdd_formula)):
+            prime_vec = [*prime]
+            current_conj = []
+            for i in range(len(prime_vec)):
+                if prime_vec[i] == 1:
+                    current_conj.append(id_var[i])
+                elif prime_vec[i] != 2:
+                    current_conj.append(Not(id_var[i]))
+            #print(current_conj)
+            conjunctions.append(And(current_conj))
+
+        prime_formula = And(
+            Or(conjunctions)
+        )
+        print("[Architecture] Done!")
+        #print("- Minimal cutstets formula: ")
+        #print(prime_formula)
+        extractor = Extractor(prime_formula, self._conf_atoms, r.f_atoms2prob)
+        rel_f = extractor.extract_reliability()
+        return rel_f
 
     @property
     def f_atoms2prob(self):
@@ -155,57 +168,7 @@ if __name__ == "__main__":
     g.add_edge('C1', 'C2')
 
     r = RelTools(g)
-    f = r.apply_allsmt()
-
-    print("Linker constraints")
-    print(r.linker_constr.serialize())
-    print("Compatibility constraints")
-    print(r.compatibility_constr)
-    print("Configurations formula")
-    print(r.conf_formula)
-    print("Probability constraints")
-    print(r.prob_constr)
-
-
-    #print("~~~~~~~")
-    #print(f.serialize())
-
-# (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
-# ('[C2-TMR_V111_A].concr.i0' & '[C2-TMR_V111_A].concr.i1' & '[C2-TMR_V111_A].concr.i2') &
-# ('[C3-TMR_V111_A].concr.i0' & '[C3-TMR_V111_A].concr.i1' & '[C3-TMR_V111_A].concr.i2') &
-# ((! 'CONF_C4[0]') -> (! '[C4-TMR_V111_A].abstr.o0')) &
-
-# ((! 'CONF_C1[0]') -> (    ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
-#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
-#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
-# ((! 'CONF_C2[0]') ->      (('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
-#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
-#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
-# ((! 'CONF_C3[0]') ->      (('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
-#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
-#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))))
-
-
-# (('[C1-TMR_V111_A].concr.i0' & '[C1-TMR_V111_A].concr.i1' & '[C1-TMR_V111_A].concr.i2') &
-# ('[C2-TMR_V111_A].concr.i0' & '[C2-TMR_V111_A].concr.i1' & '[C2-TMR_V111_A].concr.i2') &
-# ('[C3-TMR_V111_A].concr.i0' & '[C3-TMR_V111_A].concr.i1' & '[C3-TMR_V111_A].concr.i2') &
-
-# ((! 'CONF_C4[0]') -> (! '[C4-TMR_V111_A].abstr.o0')) &
-# ((! 'CONF_C1[0]') -> (    ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i0') &
-#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i3') &
-#                           ('[C1-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i6'))) &
-# ((! 'CONF_C2[0]') -> (    ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i1') &
-#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i4') &
-#                           ('[C2-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i7'))) &
-# ((! 'CONF_C3[0]') -> (    ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i2') &
-#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i5') &
-#                           ('[C3-TMR_V111_A].abstr.o0' <-> '[C4-TMR_V111_A].concr.i8'))))
+    f = r.extract_reliability_formula()
 
 
 
-#(('[C1-TMR_V111].concr.i0' & '[C1-TMR_V111].concr.i1' & '[C1-TMR_V111].concr.i2') &
-
-# ((! 'CONF_C2[0]') -> (! '[C2-TMR_V111].abstr.o0')) &
-# ((! 'CONF_C1[0]') -> (   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
-#                                                                               ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i1') &
-#                                                                               ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i2'))))
