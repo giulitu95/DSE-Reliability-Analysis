@@ -1,7 +1,11 @@
-from patterns.pattern import Pattern, PatternType, PatternDefinition
+#!/usr/bin/env python
+
+from patterns import Pattern, PatternType, PatternDefinition
 from components.module import FaultyModule
 from components.voter import Voter
 from pysmt.shortcuts import *
+
+__author__ = "Giuliano Turri"
 
 
 class TmrV111Definition(PatternDefinition):
@@ -20,7 +24,7 @@ class TmrV111Definition(PatternDefinition):
         self._voter_f_atom = voter_f_atom
         super(TmrV111Definition, self).__init__(comp_name,  comp_n_inputs, modules_f_atoms + [voter_f_atom], PatternType.TMR_V111)
         pt_name = self._pt_type.name
-        assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, a correct number of fault atoms"
+        assert len(modules_f_atoms) == 3, "[" + pt_name + "] pattern has 3 modules, choose a correct number of fault atoms"
         self._pt_name = pt_name
 
     def create(self, nominal_mod_beh) -> Pattern:

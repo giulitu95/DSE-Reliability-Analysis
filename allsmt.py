@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 import mathsat
 from pysmt.shortcuts import *
 import datetime as dt
 
+__author__ = "Giuliano Turri"
 
 # Define callback called each time mathsat finds a new model
 def callback(model, converter, result, model_counter, start_time):

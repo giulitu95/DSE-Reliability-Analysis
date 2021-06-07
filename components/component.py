@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+
 from enum import Enum
+
+__author__ = "Giuliano Turri"
 
 
 class ComponentType(Enum):

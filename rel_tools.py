@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+
 import networkx as nx
 from arch_node import ArchNode
 from pysmt.shortcuts import *
 from rel_extractor import Extractor
 from allsmt import allsmt
 import repycudd
+
+__author__ = "Giuliano Turri"
 
 
 class RelTools:
@@ -161,14 +165,28 @@ if __name__ == "__main__":
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                         ("S2", {'type': 'SOURCE'}),
-                        ("S3", {'type': 'SOURCE'}),
                         ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1})])
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C3", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C4", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C5", {'type': 'COMP', 'pt_library': pt_lib1}),
+                        ("C6", {'type': 'COMP', 'pt_library': pt_lib1})])
     g.add_edge('S1', 'C1')
-    g.add_edge('C1', 'C2')
+    g.add_edge('S2', 'C2')
+    g.add_edge('C1', 'C3')
+    g.add_edge('C1', 'C4')
+    g.add_edge('C2', 'C4')
+    g.add_edge('C2', 'C5')
+    g.add_edge('C3', 'C6')
+    g.add_edge('C4', 'C6')
+    g.add_edge('C5', 'C6')
 
     r = RelTools(g)
     f = r.extract_reliability_formula()
+    print("Reliability formula")
+    print(f.serialize())
 
+    print("Probability values")
+    print(r.prob_constr.serialize())
 
 

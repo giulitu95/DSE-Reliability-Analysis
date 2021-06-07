@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+
 from components.component import Component, ComponentType
 from enum import Enum
 import abc
+
+__author__ = "Giuliano Turri"
 
 
 class PatternType(Enum):

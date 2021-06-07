@@ -1,11 +1,14 @@
+#!/usr/bin/env python
+
 from patterns import PatternType, PatternDefinition
 from components.component import ComponentType, Component
 from components.stage import Stage
 from pysmt.shortcuts import *
 import os
-import mathsat
 from pysmt.parsing import parse
 from allsmt import allsmt
+
+__author__ = "Giuliano Turri"
 
 
 class Csa(Component):

@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+
 from components.component import Component, ComponentType
 from components.module import NominalModule
 from patterns import PatternType, PatternDefinition
 from pysmt.shortcuts import *
-from patterns.tmr_v111 import TmrV111, TmrV111Definition
-from typing import NamedTuple
+
+__author__ = "Giuliano Turri"
 
 
 class Stage(Component):

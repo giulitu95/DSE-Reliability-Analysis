@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+
 from patterns import PatternType, TmrV111Definition, TmrV111
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
 import math
 
+__author__ = "Giuliano Turri"
 
 class ArchNode:
     """

@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+
 import queue
 import pygraphviz as pgv
 
+__author__ = "Giuliano Turri"
 
 def bdd_dump_dot(root, mng, idx2var, filename="bdd.dot"):
     node_idx = 0

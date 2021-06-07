@@ -1,6 +1,7 @@
 from params import NonFuncParamas
 from patterns import PatternType
 
+__author__ = "Giuliano Turri"
 
 class PatternSpec:
     def __init__(self, pattern_type):

@@ -4,6 +4,8 @@ import queue
 import networkx as nx
 from enum import Enum
 
+__author__ = "Giuliano Turri"
+
 
 class NodeType(Enum):
     LEAF = 1

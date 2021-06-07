@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+
 from components.component import Component, ComponentType
 from pysmt.shortcuts import *
+
+__author__ = "Giuliano Turri"
 
 
 class FaultyModule(Component):
