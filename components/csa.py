@@ -97,6 +97,10 @@ class Csa(Component):
             #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
         return formula
 
+    @property
+    def comp_n_inputs(self):
+        return self._comp_n_inputs
+
 
 class Concretizer(Component):
     """

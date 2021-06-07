@@ -75,7 +75,7 @@ class RelTools:
         print("[Architecture] Quantify out non-boolean variables of all CSA")
         formula = self.__get_qe_formula()
         print("[Architecture] Quantify out input and output ports")
-        cutsets_formula = allsmt(And([formula, self._linker_constr, self._conf_formula]), to_keep_atoms)
+        cutsets_formula = allsmt(And([formula, self._linker_constr, self._compatibility_constr, self._conf_formula]), to_keep_atoms)
 
         return cutsets_formula
 
@@ -153,33 +153,22 @@ class RelTools:
     def conf_atoms(self):
         return self._conf_atoms
 
+
 # Test - Example
-from patterns import TmrV111Spec
+from patterns import TmrV111Spec, TmrV123Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
-    pt_lib1 = [     TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1)),
-                    TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
-    pt_lib2 = [     TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib1 = [     TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))]
+    pt_lib2 = [     TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)]),
+                    TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)], NonFuncParamas(0.1))
+                ]
 
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
-                        ("S2", {'type': 'SOURCE'}),
-                        ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C3", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C4", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C5", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C6", {'type': 'COMP', 'pt_library': pt_lib1})])
+                        ("C1", {'type': 'COMP', 'pt_library': pt_lib2}),
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib2})])
     g.add_edge('S1', 'C1')
-    g.add_edge('S2', 'C2')
-    g.add_edge('C1', 'C3')
-    g.add_edge('C1', 'C4')
-    g.add_edge('C2', 'C4')
-    g.add_edge('C2', 'C5')
-    g.add_edge('C3', 'C6')
-    g.add_edge('C4', 'C6')
-    g.add_edge('C5', 'C6')
+    g.add_edge('C1', 'C2')
 
     r = RelTools(g)
     f = r.extract_reliability_formula()
@@ -188,5 +177,29 @@ if __name__ == "__main__":
 
     print("Probability values")
     print(r.prob_constr.serialize())
+
+# (('[C1-TMR_V123].concr.i0' & '[C1-TMR_V123].concr.i1' & '[C1-TMR_V123].concr.i2') & ('[C1-TMR_V111].concr.i0' & '[C1-TMR_V111].concr.i1' & '[C1-TMR_V111].concr.i2') &
+#
+# (((! 'CONF_C2[0]') -> (! ('[C2-TMR_V123].abstr.o0' &
+#                           '[C2-TMR_V123].abstr.o1' &
+#                           '[C2-TMR_V123].abstr.o2'))) &
+# ('CONF_C2[0]' ->      (! '[C2-TMR_V111].abstr.o0'))) &
+#
+# (((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V123].concr.i1') &       [C1-TMR_V123] -> [C2-TMR_V123]
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V123].concr.i2'))) &
+#
+# ('CONF_C1[0]' ->      (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
+#                       ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i1') &       [C1-TMR_V111] -> [C2-TMR_V123]
+#                       ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i2'))) &
+#
+# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V111].concr.i1') &       [C1-TMR_V123] -> [C2-TMR_V111]
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V111].concr.i2'))) &
+#
+# ('CONF_C1[0]' ->      (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
+#                       ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i1') &       [C1-TMR_V111] -> [C2-TMR_V111]
+#                       ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i2')))))
+#
 
 
