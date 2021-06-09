@@ -82,7 +82,7 @@ class ArchNode:
                         Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voter_param.fault_prob))
                     )
                 )
-            if pt.pt_type == PatternType.TMR_V123:
+            elif pt.pt_type == PatternType.TMR_V123:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
                     pt_def = TmrV123Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:6])
@@ -106,6 +106,9 @@ class ArchNode:
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
+            else:
+                NotImplementedError()
+
             # TODO: do this for all patterns:
             #  elif: pt.pt_type == PatternType.TMR_V123
             #  ...
@@ -132,7 +135,7 @@ class ArchNode:
                             # if the csa has only one output, then it can be connected with every next csa
                             for in_port in to_connect_ports:
                                 comp2comp_constr.append(Iff(csa.output_ports[0], in_port))
-                        elif len(csa.output_ports) == len(to_connect_ports): # TODO: check this, this is not always correct!
+                        elif len(csa.output_ports) == len(to_connect_ports):
                             # if 2 csa have compatible outputs-inputs then, they can be connected together
                             for idx in range(len(to_connect_ports)):
                                 comp2comp_constr.append(Iff(csa.output_ports[idx], to_connect_ports[idx]))
@@ -239,6 +242,23 @@ class ArchNode:
         """
         return self._fault_atoms
 
+    @property
+    def input_ports(self):
+        """
+        :return: The list of input ports of this
+        """
+        input_ports = []
+        for csa, _ in self._csa2configs.items():
+            input_ports.extend(csa.input_ports)
+        return  input_ports
+
+    @property
+    def output_ports(self):
+        output_ports = []
+        for csa, _ in self._csa2configs.items():
+            output_ports.extend(csa.output_ports)
+        return output_ports
+
 
 
 '''# Test - Example
@@ -258,5 +278,7 @@ if __name__ == "__main__":
 
     qe1 = an1.get_qe_formulas()
     qe2 = an2.get_qe_formulas()'''
+
+
 
 

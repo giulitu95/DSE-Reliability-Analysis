@@ -151,4 +151,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-csa-cache/
+csa-cache/*
+bdd.dot
