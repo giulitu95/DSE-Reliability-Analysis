@@ -4,8 +4,8 @@ import networkx as nx
 from arch_node import ArchNode
 from pysmt.shortcuts import *
 from rel_extractor import Extractor
-from allsmt import allsmt
 import repycudd
+import time
 
 __author__ = "Giuliano Turri"
 
@@ -73,9 +73,12 @@ class RelTools:
             qe_formulas.append(And(an.get_qe_formulas()))
         return And(qe_formulas)
 
-    def extract_reliability_formula(self):
+    def extract_reliability_formula(self, benchmark=None):
+        time_start = time.perf_counter()
         # Get boolean formula of the architecture (in/out ports, fault atoms, cnf atoms)
         arch_formula = self.__get_qe_formula()
+        if benchmark is not None: benchmark.arch_creation_time = time.perf_counter() - time_start
+        # Get boolean formula of the architecture (in/out ports, fault atoms, cnf atoms)
         cut_sets = And([arch_formula, self._linker_constr])
         # Import cudd to create the OBDD
         cudd = Solver(name="bdd")
@@ -87,7 +90,9 @@ class RelTools:
             converter.declare_variable(var)
         mng = cudd.ddmanager
         print("[Architecture] Quantify out in-out ports and create BDD")
+        time_start = time.perf_counter()
         bdd_formula = converter.convert(Exists(self._io_ports, cut_sets))  # Exists(io_ports, cutsets_formula)
+        if benchmark is not None: benchmark.bdd_qelim_time = time.perf_counter() - time_start
         print("[Architecture] Done!")
         id_var = converter.idx2var
 
@@ -96,6 +101,7 @@ class RelTools:
         repycudd.set_iter_meth(2)
         conjunctions = []
         print("[Architecture] Create minimal-cutset formula (find PI)...")
+        time_start = time.perf_counter()
         for prime in repycudd.ForeachPrimeIterator(mng, repycudd.NodePair(bdd_formula, bdd_formula)): # Iterate over PI
             prime_vec = [*prime]
             current_conj = []
@@ -119,9 +125,12 @@ class RelTools:
             p_formula,
             converter.convert(self._compatibility_constr)
         )
+        if benchmark is not None: benchmark.mincutsets_time = time.perf_counter() - time_start
         print("[Architecture] Done!")
-        extractor = Extractor(p_formula, mng, converter.idx2var, self._conf_atoms, r.f_atoms2prob)
+        extractor = Extractor(p_formula, mng, converter.idx2var, self._conf_atoms, self._f_atoms2prob, benchmark=benchmark)
+        time_start = time.perf_counter()
         rel_f = extractor.extract_reliability()
+        if benchmark is not None: benchmark.rel_extraction_time = time.perf_counter() - time_start
         return rel_f
 
     @property
@@ -203,69 +212,11 @@ if __name__ == "__main__":
     print(r.linker_constr.serialize())
     print("Configuration constraints")
     print(r.conf_formula.serialize())
-    f = r.extract_reliability_formula()
+    arch_formula = r.get_qe_formula()
+    f = r.extract_reliability_formula(arch_formula)
     print("Reliability formula")
     print(f)
 
     print("Probability values")
     print(r.prob_constr)
 
-# (('[C1-TMR_V123].concr.i0' &
-# '[C1-TMR_V123].concr.i1' &
-# '[C1-TMR_V123].concr.i2') &
-#
-# ('[C1-TMR_V111].concr.i0' &
-# '[C1-TMR_V111].concr.i1' &
-# '[C1-TMR_V111].concr.i2') &
-#
-# (((! 'CONF_C4[0]') -> (! ('[C4-TMR_V123].abstr.o0' & '[C4-TMR_V123].abstr.o1' & '[C4-TMR_V123].abstr.o2'))) &
-# ('CONF_C4[0]' -> (! '[C4-TMR_V111].abstr.o0'))) &
-#
-# (((! 'CONF_C2[0]') -> (('[C2-TMR_V123].abstr.o0' <-> '[C4-TMR_V123].concr.i0') &
-#                       ('[C2-TMR_V123].abstr.o1' <-> '[C4-TMR_V123].concr.i2') &
-#                       ('[C2-TMR_V123].abstr.o2' <-> '[C4-TMR_V123].concr.i4'))) &
-# ('CONF_C2[0]' -> (('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i0') &
-#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i2') &
-#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i4'))) &
-# ((! 'CONF_C2[0]') -> (('[C2-TMR_V123].abstr.o0' <-> '[C4-TMR_V111].concr.i0') &
-#                       ('[C2-TMR_V123].abstr.o1' <-> '[C4-TMR_V111].concr.i2') &
-#                       ('[C2-TMR_V123].abstr.o2' <-> '[C4-TMR_V111].concr.i4'))) &
-# ('CONF_C2[0]' -> (('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i0') &
-#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i2') &
-#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i4')))) &
-# (((! 'CONF_C3[0]') -> (('[C3-TMR_V123].abstr.o0' <-> '[C4-TMR_V123].concr.i1') &
-#                       ('[C3-TMR_V123].abstr.o1' <-> '[C4-TMR_V123].concr.i3') &
-#                       ('[C3-TMR_V123].abstr.o2' <-> '[C4-TMR_V123].concr.i5'))) &
-# ('CONF_C3[0]' -> (('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i1') &
-#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i3') &
-#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i5'))) &
-# ((! 'CONF_C3[0]') -> (('[C3-TMR_V123].abstr.o0' <-> '[C4-TMR_V111].concr.i1') &
-#                       ('[C3-TMR_V123].abstr.o1' <-> '[C4-TMR_V111].concr.i3') &
-#                       ('[C3-TMR_V123].abstr.o2' <-> '[C4-TMR_V111].concr.i5'))) &
-# ('CONF_C3[0]' -> (('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i1') &
-#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i3') &
-#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i5')))) &
-# (((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
-#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V123].concr.i1') &
-#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V123].concr.i2'))) &
-# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i1') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i2'))) &
-# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
-#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V111].concr.i1') &
-#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V111].concr.i2'))) &
-# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i1') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i2'))) &
-# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C3-TMR_V123].concr.i0') &
-#                       ('[C1-TMR_V123].abstr.o1' <-> '[C3-TMR_V123].concr.i1') &
-#                       ('[C1-TMR_V123].abstr.o2' <-> '[C3-TMR_V123].concr.i2'))) &
-# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i0') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i1') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i2'))) &
-# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C3-TMR_V111].concr.i0') &
-#                       ('[C1-TMR_V123].abstr.o1' <-> '[C3-TMR_V111].concr.i1') &
-#                       ('[C1-TMR_V123].abstr.o2' <-> '[C3-TMR_V111].concr.i2'))) &
-# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i0') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i1') &
-#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i2')))))

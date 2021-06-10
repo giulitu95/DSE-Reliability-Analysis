@@ -3,6 +3,7 @@ import utils
 import queue
 import networkx as nx
 from enum import Enum
+import time
 
 __author__ = "Giuliano Turri"
 
@@ -67,15 +68,18 @@ class LeafNode(Node):
 
 class Extractor:
 
-    def __init__(self, formula, mng, idx2var, cfg_symbols, f_symbols2prob):
+    def __init__(self, formula, mng, idx2var, cfg_symbols, f_symbols2prob, sift=False, benchmark=None):
         self._bdd_mng = mng
         self._formula = formula
-        print("[Extractor] Apply SIFT algorithm,,,")
-        self._bdd_mng.ReduceHeap(4, 0)
-        print("[Extractor] Done!")
+        if sift:
+            print("[Extractor] Apply SIFT algorithm,,,")
+            time_start = time.perf_counter()
+            self._bdd_mng.ReduceHeap(4, 0)
+            if benchmark is not None: benchmark.sift_time = time.perf_counter() - time_start
+            print("[Extractor] Done!")
         # map cudd index - pySMT variable
         self._idx2var = idx2var
-        utils.bdd_dump_dot(self._formula, self._bdd_mng, self._idx2var)
+        #utils.bdd_dump_dot(self._formula, self._bdd_mng, self._idx2var)
         self._f_symbols2prob = f_symbols2prob
         conf_symbol2type = {k: NodeType.CONFIG for k in cfg_symbols}
         fault_symbols2type = {k: NodeType.FAULT for k, _ in self._f_symbols2prob.items()}

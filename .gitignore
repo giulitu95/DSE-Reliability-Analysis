@@ -153,3 +153,4 @@ fabric.properties
 
 csa-cache/*
 bdd.dot
+benchmarks/*
