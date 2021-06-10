@@ -76,7 +76,7 @@ class RelTools:
     def extract_reliability_formula(self):
         # Get boolean formula of the architecture (in/out ports, fault atoms, cnf atoms)
         arch_formula = self.__get_qe_formula()
-        cut_sets = And([arch_formula, self._linker_constr, self._compatibility_constr])
+        cut_sets = And([arch_formula, self._linker_constr])
         # Import cudd to create the OBDD
         cudd = Solver(name="bdd")
 
@@ -85,9 +85,9 @@ class RelTools:
         # Fix a variable ordering
         for var in self._var_order:
             converter.declare_variable(var)
-        m1 = cudd.ddmanager
+        mng = cudd.ddmanager
         print("[Architecture] Quantify out in-out ports and create BDD")
-        bdd_formula = converter.convert(Exists(self._io_ports, cut_sets))  # converted formula
+        bdd_formula = converter.convert(Exists(self._io_ports, cut_sets))  # Exists(io_ports, cutsets_formula)
         print("[Architecture] Done!")
         id_var = converter.idx2var
 
@@ -96,23 +96,31 @@ class RelTools:
         repycudd.set_iter_meth(2)
         conjunctions = []
         print("[Architecture] Create minimal-cutset formula (find PI)...")
-        for prime in repycudd.ForeachPrimeIterator(m1, repycudd.NodePair(bdd_formula, bdd_formula)):
+        for prime in repycudd.ForeachPrimeIterator(mng, repycudd.NodePair(bdd_formula, bdd_formula)): # Iterate over PI
             prime_vec = [*prime]
             current_conj = []
             for i in range(len(prime_vec)):
                 if prime_vec[i] == 1:
-                    current_conj.append(id_var[i])
+                    current_conj.append(mng.IthVar(i))
                 elif prime_vec[i] != 2:
-                    current_conj.append(Not(id_var[i]))
-            #print(current_conj)
-            conjunctions.append(And(current_conj))
-
-        prime_formula = And(
-            Or(conjunctions),
-            self._conf_formula
+                    current_conj.append(mng.Not(mng.IthVar(i)))
+            lit_ddarr = repycudd.DdArray(mng, len(current_conj)) # literal array: contains the literals of the prime implicants
+            for lit in current_conj: lit_ddarr.Push(lit) # The PI is the conjunction of PI
+            conjunctions.append(lit_ddarr.And())
+        # Create array of PI
+        pi_ddarr = repycudd.DdArray(mng, len(conjunctions))
+        for pi in conjunctions: pi_ddarr.Push(pi)
+        # Assemble minimal cutset formula
+        p_formula = mng.And(
+            pi_ddarr.Or(),
+            converter.convert(self._conf_formula)
+        )
+        p_formula = mng.And(
+            p_formula,
+            converter.convert(self._compatibility_constr)
         )
         print("[Architecture] Done!")
-        extractor = Extractor(prime_formula, self._conf_atoms, r.f_atoms2prob, order=self._var_order)
+        extractor = Extractor(p_formula, mng, converter.idx2var, self._conf_atoms, r.f_atoms2prob)
         rel_f = extractor.extract_reliability()
         return rel_f
 
@@ -186,16 +194,78 @@ if __name__ == "__main__":
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                         ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1})
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
     ])
     g.add_edge('S1', 'C1')
     g.add_edge('C1', 'C2')
     r = RelTools(g)
-
+    print("Linker constraints")
+    print(r.linker_constr.serialize())
+    print("Configuration constraints")
+    print(r.conf_formula.serialize())
     f = r.extract_reliability_formula()
     print("Reliability formula")
-    print(f.serialize())
+    print(f)
 
     print("Probability values")
-    print(r.prob_constr.serialize())
+    print(r.prob_constr)
 
+# (('[C1-TMR_V123].concr.i0' &
+# '[C1-TMR_V123].concr.i1' &
+# '[C1-TMR_V123].concr.i2') &
+#
+# ('[C1-TMR_V111].concr.i0' &
+# '[C1-TMR_V111].concr.i1' &
+# '[C1-TMR_V111].concr.i2') &
+#
+# (((! 'CONF_C4[0]') -> (! ('[C4-TMR_V123].abstr.o0' & '[C4-TMR_V123].abstr.o1' & '[C4-TMR_V123].abstr.o2'))) &
+# ('CONF_C4[0]' -> (! '[C4-TMR_V111].abstr.o0'))) &
+#
+# (((! 'CONF_C2[0]') -> (('[C2-TMR_V123].abstr.o0' <-> '[C4-TMR_V123].concr.i0') &
+#                       ('[C2-TMR_V123].abstr.o1' <-> '[C4-TMR_V123].concr.i2') &
+#                       ('[C2-TMR_V123].abstr.o2' <-> '[C4-TMR_V123].concr.i4'))) &
+# ('CONF_C2[0]' -> (('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i0') &
+#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i2') &
+#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i4'))) &
+# ((! 'CONF_C2[0]') -> (('[C2-TMR_V123].abstr.o0' <-> '[C4-TMR_V111].concr.i0') &
+#                       ('[C2-TMR_V123].abstr.o1' <-> '[C4-TMR_V111].concr.i2') &
+#                       ('[C2-TMR_V123].abstr.o2' <-> '[C4-TMR_V111].concr.i4'))) &
+# ('CONF_C2[0]' -> (('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i0') &
+#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i2') &
+#                   ('[C2-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i4')))) &
+# (((! 'CONF_C3[0]') -> (('[C3-TMR_V123].abstr.o0' <-> '[C4-TMR_V123].concr.i1') &
+#                       ('[C3-TMR_V123].abstr.o1' <-> '[C4-TMR_V123].concr.i3') &
+#                       ('[C3-TMR_V123].abstr.o2' <-> '[C4-TMR_V123].concr.i5'))) &
+# ('CONF_C3[0]' -> (('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i1') &
+#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i3') &
+#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V123].concr.i5'))) &
+# ((! 'CONF_C3[0]') -> (('[C3-TMR_V123].abstr.o0' <-> '[C4-TMR_V111].concr.i1') &
+#                       ('[C3-TMR_V123].abstr.o1' <-> '[C4-TMR_V111].concr.i3') &
+#                       ('[C3-TMR_V123].abstr.o2' <-> '[C4-TMR_V111].concr.i5'))) &
+# ('CONF_C3[0]' -> (('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i1') &
+#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i3') &
+#                   ('[C3-TMR_V111].abstr.o0' <-> '[C4-TMR_V111].concr.i5')))) &
+# (((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V123].concr.i1') &
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V123].concr.i2'))) &
+# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i0') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i1') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V123].concr.i2'))) &
+# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C2-TMR_V111].concr.i1') &
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C2-TMR_V111].concr.i2'))) &
+# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i0') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i1') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C2-TMR_V111].concr.i2'))) &
+# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C3-TMR_V123].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C3-TMR_V123].concr.i1') &
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C3-TMR_V123].concr.i2'))) &
+# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i0') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i1') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V123].concr.i2'))) &
+# ((! 'CONF_C1[0]') -> (('[C1-TMR_V123].abstr.o0' <-> '[C3-TMR_V111].concr.i0') &
+#                       ('[C1-TMR_V123].abstr.o1' <-> '[C3-TMR_V111].concr.i1') &
+#                       ('[C1-TMR_V123].abstr.o2' <-> '[C3-TMR_V111].concr.i2'))) &
+# ('CONF_C1[0]' -> (('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i0') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i1') &
+#                   ('[C1-TMR_V111].abstr.o0' <-> '[C3-TMR_V111].concr.i2')))))

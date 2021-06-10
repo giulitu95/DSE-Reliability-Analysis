@@ -67,25 +67,14 @@ class LeafNode(Node):
 
 class Extractor:
 
-    def __init__(self, formula, cfg_symbols, f_symbols2prob, order=None):
-        print("[Extractor] Create CCE-ROBDD...")
-        min_bdd = Solver(name="bdd")
-        # create bdd converter
-        min_converter = min_bdd.converter
-        # Import cudd manager
-        self._bdd_mng = min_bdd.ddmanager
-        if order is not None:
-            for var in order:
-                min_converter.declare_variable(var)
-            self._formula = min_converter.convert(formula)
-        else:
-            self._formula = min_converter.convert(formula)
-            print("[Extractor]    Apply SIFT algorithm,,,")
-            self._bdd_mng.ReduceHeap(4, 0)
-            print("[Extractor]    Done!")
+    def __init__(self, formula, mng, idx2var, cfg_symbols, f_symbols2prob):
+        self._bdd_mng = mng
+        self._formula = formula
+        print("[Extractor] Apply SIFT algorithm,,,")
+        self._bdd_mng.ReduceHeap(4, 0)
         print("[Extractor] Done!")
         # map cudd index - pySMT variable
-        self._idx2var = min_converter.idx2var
+        self._idx2var = idx2var
         utils.bdd_dump_dot(self._formula, self._bdd_mng, self._idx2var)
         self._f_symbols2prob = f_symbols2prob
         conf_symbol2type = {k: NodeType.CONFIG for k in cfg_symbols}
