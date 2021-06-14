@@ -150,10 +150,10 @@ def plot_compare_pt(file_list):
     fig = px.line(res, x="len", y="total_ext_time", color='pattern')
     fig.show()
 
-lib_1pt = [TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.1), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    NonFuncParamas(0.1)),
-           TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                       [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)])
+lib_1pt = [TmrV111Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.1,1), NonFuncParamas(0.02,1)],
+                    NonFuncParamas(0.1,1)),
+           TmrV123Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1)],
+                       [NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1)])
            ]
 
 

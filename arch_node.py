@@ -56,8 +56,10 @@ class ArchNode:
         # - prepare list of csa for each possible pattern-combination
         # - assign non functional parameters to the probability symbols
         pt_type2csa = {}
+        self._conf2pt = {}
         for idx, pt in enumerate(pt_library):
             conf = self.get_conf_by_index(idx)
+            self._conf2pt[conf] = pt
             if pt.pt_type == PatternType.TMR_V111:
                 if pt.pt_type not in pt_type2csa:
                     # create Csa only if a csa of the same pattern has not been created
@@ -242,6 +244,12 @@ class ArchNode:
         """
         return self._fault_atoms
 
+    @property
+    def conf2pt(self):
+        """
+        :return: A dictionary which assign a pattern spec to every configuration
+        """
+        return self._conf2pt
     @property
     def input_ports(self):
         """

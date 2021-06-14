@@ -51,6 +51,7 @@ class RelTools:
         prob_constr = []
         self._io_ports = []
         self._f_atoms2prob = {}
+        self._conf2pt = {}
         for _, an in self._nxnode2archnode.items():
             linker_constr.append(an.linker_constr)
             compatibility_constr.append((an.compatibility_constr))
@@ -59,6 +60,7 @@ class RelTools:
             self._f_atoms2prob.update(an.f_atoms2prob)
             self._io_ports.extend(an.input_ports)
             self._io_ports.extend(an.output_ports)
+            self._conf2pt.update(an.conf2pt)
         self._linker_constr = And(linker_constr)
         self._compatibility_constr = And(compatibility_constr)
         self._conf_formula = And(conf_formulas)
@@ -78,6 +80,7 @@ class RelTools:
         # Get boolean formula of the architecture (in/out ports, fault atoms, cnf atoms)
         arch_formula = self.__get_qe_formula()
         if benchmark is not None: benchmark.arch_creation_time = time.perf_counter() - time_start
+        total_time_start = time.perf_counter()
         # Get boolean formula of the architecture (in/out ports, fault atoms, cnf atoms)
         cut_sets = And([arch_formula, self._linker_constr])
         # Import cudd to create the OBDD
@@ -130,8 +133,10 @@ class RelTools:
         extractor = Extractor(p_formula, mng, converter.idx2var, self._conf_atoms, self._f_atoms2prob, benchmark=benchmark)
         time_start = time.perf_counter()
         rel_f = extractor.extract_reliability()
-        if benchmark is not None: benchmark.rel_extraction_time = time.perf_counter() - time_start
-        return rel_f
+        if benchmark is not None:
+            benchmark.rel_extraction_time = time.perf_counter() - time_start
+            benchmark.total_ext_time = time.perf_counter() - total_time_start
+        return extractor.rel_symbol, rel_f
 
     @property
     def f_atoms2prob(self):
@@ -172,22 +177,28 @@ class RelTools:
     def conf_atoms(self):
         return self._conf_atoms
 
+    @property
+    def conf2pt(self):
+        return self._conf2pt
 
-# Test - Example
+    @property
+    def nxnode2archnode(self):
+        return self._nxnode2archnode
+
+
+'''# Test - Example
 from patterns import TmrV111Spec, TmrV123Spec
 from params import NonFuncParamas
 if __name__ == "__main__":
     pt_lib1 = [
         TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    NonFuncParamas(0.1))
+                    NonFuncParamas(0.1)),
+        TmrV111Spec([NonFuncParamas(0.2), NonFuncParamas(0.3), NonFuncParamas(0.03), NonFuncParamas(0.2)],
+                    NonFuncParamas(0.2))
     ]
     pt_lib2 = [
         TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)]),
-        TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    NonFuncParamas(0.1)),
-        TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.1), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    NonFuncParamas(0.1))
+                    [NonFuncParamas(0.2), NonFuncParamas(0.3), NonFuncParamas(0.03), NonFuncParamas(0.2)])
     ]
     pt_lib3 = [
         TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
@@ -195,7 +206,7 @@ if __name__ == "__main__":
     ]
     pt_lib4 = [
         TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                    [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)]),
+                    [NonFuncParamas(0.), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)]),
         TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
                     NonFuncParamas(0.1))
     ]
@@ -208,15 +219,34 @@ if __name__ == "__main__":
     g.add_edge('S1', 'C1')
     g.add_edge('C1', 'C2')
     r = RelTools(g)
-    print("Linker constraints")
-    print(r.linker_constr.serialize())
-    print("Configuration constraints")
-    print(r.conf_formula.serialize())
-    arch_formula = r.get_qe_formula()
-    f = r.extract_reliability_formula(arch_formula)
-    print("Reliability formula")
-    print(f)
+    rel, f = r.extract_reliability_formula()
+    from pysmt.optimization.goal import MaximizationGoal, MinimizationGoal
+    from pysmt.logics import QF_NRA
 
-    print("Probability values")
-    print(r.prob_constr)
+    max = MinimizationGoal(rel)
+    print(f.serialize())
+    with Optimizer(name="z3") as opt:
+        opt.add_assertion(f)
+        opt.add_assertion(r.prob_constr)
+        opt.add_assertion(r.conf_formula)
+        b = opt.optimize(max)
+        if b is not None:
+            a,c = b
+            print(a)'''
 
+    # (((CONF_C1[0] ? (rel_CONF_C1[0]-0 = rel_FALSE--2) : (rel_CONF_C1[0]-0 = rel_C1_F0-1))
+    # & (rel_C1_F0-1 = ((p0_C1 * rel_C1_F1-12) + ((1.0 - p0_C1) * rel_C1_F1-2))) &
+    # (rel_C1_F1-2 = ((p1_C1 * rel_C1_F2-11) + ((1.0 - p1_C1) * rel_C1_F3-3))) &
+    # (rel_C1_F3-3 = ((p3_C1 * rel_CONF_C2[0]-10') + ((1.0 - p3_C1) * rel_CONF_C2[0]-4'))) &
+    # (CONF_C2[0] ? ('rel_CONF_C2[0]-4 = rel_FALSE--2) : (rel_CONF_C2[0]-4 = rel_C2_F0-5)) &
+    # (rel_C2_F0-5 = ((p0_C2 * rel_C2_F1-9) + ((1.0 - p0_C2) * rel_C2_F1-6))) &
+    # (rel_C2_F1-6 = ((p1_C2 * rel_C2_F2-8) + ((1.0 - p1_C2) * rel_C2_F3-7))) &
+    # (rel_C2_F3-7 = ((p3_C2 * rel_TRUE--1) + ((1.0 - p3_C2) * rel_FALSE--2))) &
+    # (rel_FALSE--2 = 0.0) &
+    # (rel_TRUE--1 = 1.0) &
+    # (rel_C2_F2-8 = ((p2_C2 * rel_TRUE--1) + ((1.0 - p2_C2) * rel_C2_F3-7))) &
+    # (rel_C2_F1-9 = ((p1_C2 * rel_TRUE--1) + ((1.0 - p1_C2) * rel_C2_F2-8))) &
+    # (CONF_C2[0] ? (rel_CONF_C2[0]-10 = rel_FALSE--2) : (rel_\'CONF_C2[0]-10 = rel_TRUE--1)) &
+    # (rel_C1_F2-11 = ((p2_C1 * rel_CONF_C2[0]-10) + ((1.0 - p2_C1) * rel_C1_F3-3))) &
+    # (rel_C1_F1-12 = ((p1_C1 * rel_CONF_C2[0]-10) + ((1.0 - p1_C1) * rel_C1_F2-11)))) &
+    # (Rel = 'rel_CONF_C1[0]-0))
