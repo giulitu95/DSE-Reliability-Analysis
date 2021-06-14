@@ -7,10 +7,10 @@ __author__ = "Giuliano Turri, Antonio Tierno"
 
 
 class PatternSpec:
-    def __init__(self, pattern_type, pattern_class):
+    def __init__(self, pattern_type, pattern_class, param_list):
         self._pt_type = pattern_type
         self._pt_class = pattern_class
-
+        self._param_list = param_list
     @property
     def pt_type(self):
         return self._pt_type
@@ -18,6 +18,10 @@ class PatternSpec:
     @property
     def pt_class(self):
         return self._pt_class
+
+    @property
+    def param_list(self):
+        return self._param_list
 
 
 class TmrV111Spec(PatternSpec):
@@ -29,7 +33,7 @@ class TmrV111Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voter_param = voter_params
-        super(TmrV111Spec, self).__init__(PatternType.TMR_V111, tmr_v111.TmrV111)
+        super(TmrV111Spec, self).__init__(PatternType.TMR_V111, tmr_v111.TmrV111, modules_params + [voter_params])
 
     @property
     def modules_params(self):
@@ -49,7 +53,7 @@ class TmrV123Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV123Spec, self).__init__(PatternType.TMR_V123, tmr_v123.TmrV123)
+        super(TmrV123Spec, self).__init__(PatternType.TMR_V123, tmr_v123.TmrV123, modules_params + voters_params)
 
     @property
     def modules_params(self):
