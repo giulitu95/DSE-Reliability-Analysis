@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from patterns import PatternType, TmrV111Definition, TmrV123Definition
+from patterns import PatternType, TmrV111Definition, TmrV123Definition, PlainDefinition
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
@@ -102,12 +102,24 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:6]):
                     prob_constraints.append(
                         Implies(
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
+            elif pt.pt_type == PatternType.PLAIN:
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = PlainDefinition(comp_name, n_predecessors, self._fault_atoms[0])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                prob_constraints.append(Implies(
+                    conf,
+                    Equals(self._f_atoms2prob[self._fault_atoms[0]], Real(pt.module_params[0]))
+                ))
             else:
                 NotImplementedError()
 

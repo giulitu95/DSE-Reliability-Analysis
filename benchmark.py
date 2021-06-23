@@ -1,15 +1,14 @@
-from patterns import TmrV111Spec, TmrV123Spec, PatternType
+import fractions
+
+from patterns import TmrV111Spec, TmrV123Spec, PatternType, PlainSpec
 from params import NonFuncParamas
 from rel_tools import RelTools
 import networkx as nx
 import csv
-import time
-import os
-from typing import NamedTuple
 import plotly.express as px
-import matplotlib.pyplot as plt
 import pandas as pd
-
+import random
+from optimizer import Dse
 
 class Benchmark():
     def __init__(self):
@@ -20,6 +19,7 @@ class Benchmark():
         self.sift_time= None
         self.rel_extraction_time = None
         self.total_ext_time = None
+        self.optimization_time = None
 
     @staticmethod
     def get_header():
@@ -29,7 +29,8 @@ class Benchmark():
                 "sift",
                 "sift_time",
                 "rel_extraction_time",
-                "total_ext_time"]
+                "total_ext_time",
+                "optimization_time"]
 
     def get_values(self):
         return [self.arch_creation_time,
@@ -38,8 +39,11 @@ class Benchmark():
                 self.sift,
                 self.sift_time,
                 self.rel_extraction_time,
-                self.total_ext_time]
+                self.total_ext_time,
+                self.optimization_time]
 
+
+random.seed(a=1, version=2)
 
 def test_chain(file_name, pt_lib, max_len = 100):
     with open(file_name, 'w', newline='') as file:
@@ -68,11 +72,11 @@ def test_chain_same_pt(file_name, pt_type, max_n_patt = 50, len_chain = 20):
             print("~" * 10 + " " + str(len) + " patterns " + "~" * 10)
             # Create pt_lib
             if pt_type == PatternType.TMR_V111:
-                pt_lib = [TmrV111Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                        NonFuncParamas(0.1))] * n
+                pt_lib = [TmrV111Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)],
+                        NonFuncParamas(0.1,1))] * n
             elif pt_type == PatternType.TMR_V123:
-                pt_lib = [TmrV123Spec([NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)],
-                            [NonFuncParamas(0.1), NonFuncParamas(0.2), NonFuncParamas(0.02), NonFuncParamas(0.1)])] * n
+                pt_lib = [TmrV123Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)],
+                            [NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)])] * n
             # Create graph
             graph = nx.DiGraph()
             graph.add_nodes_from([("S", {'type': 'SOURCE'})])
@@ -83,6 +87,46 @@ def test_chain_same_pt(file_name, pt_type, max_n_patt = 50, len_chain = 20):
             r.extract_reliability_formula(benchmark=benchmark)
             writer.writerow(benchmark.get_values() + [n])
 
+
+def test_chain_opt(file_name, max_len=6):
+    with open(file_name, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(Benchmark.get_header() + ["n_pt"])  # header
+        for len in range(2, max_len):
+            benchmark = Benchmark()
+            print("~" * 10 + " " + str(len) + " len chain " + "~" * 10)
+            graph = nx.DiGraph()
+            graph.add_nodes_from([("S", {'type': 'SOURCE'})])
+            nodes = [("C" + str(idx), {'type': 'COMP', 'pt_library': [TmrV111Spec([NonFuncParamas(random.uniform(0,1), random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20))],
+                                                                                  NonFuncParamas(random.uniform(0,1), random.randrange(20))),
+                                                                      TmrV111Spec([NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(
+                                                                                                      20))],
+                                                                                  NonFuncParamas(random.uniform(0, 1),
+                                                                                                 random.randrange(20))),
+                                                                      TmrV111Spec([NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(20)),
+                                                                                   NonFuncParamas(random.uniform(0, 1),
+                                                                                                  random.randrange(
+                                                                                                      20))],
+                                                                                  NonFuncParamas(random.uniform(0, 1),
+                                                                                                 random.randrange(20)))
+                                                                      ]}) for idx in range(len)]
+            graph.add_nodes_from(nodes)
+            edges = [("C" + str(idx), "C" + str(idx + 1)) for idx in range(len - 1)]
+            edges.append(("S", "C0"))
+            graph.add_edges_from(edges)
+            opt = Dse(graph)
+            opt.optimize(benchmark=benchmark)
+            writer.writerow(benchmark.get_values() + [len])
 
 def plot_1pt_chain_benchmark(file, title):
     #df = pd.read_csv('benchmarks/tmr_V111_chain.csv')
@@ -132,11 +176,16 @@ def plot_chain_same_pt(file, title):
     rel_df["section"] = "Rel formula ext. time"
     res = pd.concat([qelim_df, min_df, rel_df], axis=0)
     fig = px.area(res,
-                  x="n_pt",
+                  x="len",
                   y="time",
                   color="section",
-                  labels={"section": "Section", "time": "Time (s)", "n_pt": "n. patterns"},
+                  labels={"section": "Section", "time": "Time (s)", "len": "Chain length"},
                   title=title)
+    fig.show()
+
+def plot_opt(file, title):
+    df = pd.read_csv(file)
+    fig = px.line(df, x="n_pt", y="optimization_time")
     fig.show()
 
 def plot_compare_pt(file_list):
@@ -147,19 +196,27 @@ def plot_compare_pt(file_list):
         tmp_df['pattern'] = name
         res_df.append(tmp_df)
     res = pd.concat(res_df, axis=0)
-    fig = px.line(res, x="len", y="total_ext_time", color='pattern')
+    fig = px.line(res, x="len",
+                  y="total_ext_time",
+                  color='pattern',
+                  labels={"pattern": "Patterns", "total_ext_time": "Time (s)", "len": "Chain length"},
+                  title="Multiple patterns comparison")
     fig.show()
 
-lib_1pt = [TmrV111Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.1,1), NonFuncParamas(0.02,1)],
-                    NonFuncParamas(0.1,1)),
-           TmrV123Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1)],
-                       [NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1)])
+lib_1pt = [
+    TmrV111Spec([NonFuncParamas(0.2,1), NonFuncParamas(0.3,1), NonFuncParamas(0.03,1)],
+                NonFuncParamas(0.2,1))
            ]
 
 
-#test_chain("benchmarks/V123_V111_chain.csv", lib_1pt)
+#test_chain("benchmarks/v111_tmp_chain.csv", lib_1pt, max_len=3)
 #test_chain_same_pt("benchmarks/chain_same_pt_tmp.csv", PatternType.TMR_V123)
-#plot_1pt_chain_benchmark("benchmarks/V123_V111_chain.csv", "TMR V111")
+#plot_1pt_chain_benchmark("benchmarks/v111_tmp_chain.csv", "tmr-v111")
 #plot_chain_same_pt()
-#plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111", "benchmarks/tmr_V123_chain.csv": "tmr-v123", "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111"})
-
+#plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111",
+#                 "benchmarks/plain_chain.csv": "plain",
+#                 "benchmarks/tmr_V123_chain.csv": "tmr-v123",
+#                 "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111",
+#                 "benchmarks/V123_V111_plain_chain.csv": "tmr-v123, tmr-v111, plain"})
+test_chain_opt(file_name="benchmarks/2pt_opt_chain.csv", max_len=3)
+#plot_opt("benchmarks/2pt_opt_chain.csv", "opt")
