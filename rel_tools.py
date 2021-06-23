@@ -97,31 +97,9 @@ class RelTools:
         bdd_formula = converter.convert(Exists(self._io_ports, cut_sets))  # Exists(io_ports, cutsets_formula)
         if benchmark is not None: benchmark.bdd_qelim_time = time.perf_counter() - time_start
         print("[Architecture] Done!")
-        id_var = converter.idx2var
-
-        # Create Minimal cutset formula
-        # Iterate over prime implicants, creating a pySMT formula representing primes
-        repycudd.set_iter_meth(2)
-        conjunctions = []
-        print("[Architecture] Create minimal-cutset formula (find PI)...")
-        time_start = time.perf_counter()
-        for prime in repycudd.ForeachPrimeIterator(mng, repycudd.NodePair(bdd_formula, bdd_formula)): # Iterate over PI
-            prime_vec = [*prime]
-            current_conj = []
-            for i in range(len(prime_vec)):
-                if prime_vec[i] == 1:
-                    current_conj.append(mng.IthVar(i))
-                elif prime_vec[i] != 2:
-                    current_conj.append(mng.Not(mng.IthVar(i)))
-            lit_ddarr = repycudd.DdArray(mng, len(current_conj)) # literal array: contains the literals of the prime implicants
-            for lit in current_conj: lit_ddarr.Push(lit) # The PI is the conjunction of PI
-            conjunctions.append(lit_ddarr.And())
-        # Create array of PI
-        pi_ddarr = repycudd.DdArray(mng, len(conjunctions))
-        for pi in conjunctions: pi_ddarr.Push(pi)
         # Assemble minimal cutset formula
         p_formula = mng.And(
-            pi_ddarr.Or(),
+            bdd_formula,
             converter.convert(self._conf_formula)
         )
         p_formula = mng.And(
@@ -233,20 +211,3 @@ if __name__ == "__main__":
         if b is not None:
             a,c = b
             print(a)'''
-
-    # (((CONF_C1[0] ? (rel_CONF_C1[0]-0 = rel_FALSE--2) : (rel_CONF_C1[0]-0 = rel_C1_F0-1))
-    # & (rel_C1_F0-1 = ((p0_C1 * rel_C1_F1-12) + ((1.0 - p0_C1) * rel_C1_F1-2))) &
-    # (rel_C1_F1-2 = ((p1_C1 * rel_C1_F2-11) + ((1.0 - p1_C1) * rel_C1_F3-3))) &
-    # (rel_C1_F3-3 = ((p3_C1 * rel_CONF_C2[0]-10') + ((1.0 - p3_C1) * rel_CONF_C2[0]-4'))) &
-    # (CONF_C2[0] ? ('rel_CONF_C2[0]-4 = rel_FALSE--2) : (rel_CONF_C2[0]-4 = rel_C2_F0-5)) &
-    # (rel_C2_F0-5 = ((p0_C2 * rel_C2_F1-9) + ((1.0 - p0_C2) * rel_C2_F1-6))) &
-    # (rel_C2_F1-6 = ((p1_C2 * rel_C2_F2-8) + ((1.0 - p1_C2) * rel_C2_F3-7))) &
-    # (rel_C2_F3-7 = ((p3_C2 * rel_TRUE--1) + ((1.0 - p3_C2) * rel_FALSE--2))) &
-    # (rel_FALSE--2 = 0.0) &
-    # (rel_TRUE--1 = 1.0) &
-    # (rel_C2_F2-8 = ((p2_C2 * rel_TRUE--1) + ((1.0 - p2_C2) * rel_C2_F3-7))) &
-    # (rel_C2_F1-9 = ((p1_C2 * rel_TRUE--1) + ((1.0 - p1_C2) * rel_C2_F2-8))) &
-    # (CONF_C2[0] ? (rel_CONF_C2[0]-10 = rel_FALSE--2) : (rel_\'CONF_C2[0]-10 = rel_TRUE--1)) &
-    # (rel_C1_F2-11 = ((p2_C1 * rel_CONF_C2[0]-10) + ((1.0 - p2_C1) * rel_C1_F3-3))) &
-    # (rel_C1_F1-12 = ((p1_C1 * rel_CONF_C2[0]-10) + ((1.0 - p1_C1) * rel_C1_F2-11)))) &
-    # (Rel = 'rel_CONF_C1[0]-0))

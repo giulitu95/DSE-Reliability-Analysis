@@ -2,6 +2,7 @@ from params import NonFuncParamas
 from patterns import PatternType
 import patterns.tmr_v111 as tmr_v111
 import patterns.tmr_v123 as tmr_v123
+import patterns.plain as plain
 
 __author__ = "Giuliano Turri, Antonio Tierno"
 
@@ -62,6 +63,16 @@ class TmrV123Spec(PatternSpec):
     @property
     def voters_params(self):
         return self._voters_params
+
+
+class PlainSpec(PatternSpec):
+    def __init__(self, module_params: NonFuncParamas):
+        self._module_params = module_params
+        super(PlainSpec,self).__init__(PatternType.PLAIN, plain.Plain, [self._module_params])
+
+    @property
+    def module_params(self):
+        return self._module_params
 
 
 
