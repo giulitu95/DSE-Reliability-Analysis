@@ -1,8 +1,6 @@
 import itertools
 from patterns import *
-import networkx as nx
 import copy
-import random
 from rel_tools import RelTools
 from tqdm import tqdm
 

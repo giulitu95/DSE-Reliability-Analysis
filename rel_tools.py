@@ -52,7 +52,7 @@ class RelTools:
         self._io_ports = []
         self._f_atoms2prob = {}
         self._conf2pt = {}
-        for _, an in self._nxnode2archnode.items():
+        for nxnode, an in self._nxnode2archnode.items():
             linker_constr.append(an.linker_constr)
             compatibility_constr.append((an.compatibility_constr))
             conf_formulas.append(an.conf_formula)
@@ -60,7 +60,7 @@ class RelTools:
             self._f_atoms2prob.update(an.f_atoms2prob)
             self._io_ports.extend(an.input_ports)
             self._io_ports.extend(an.output_ports)
-            self._conf2pt.update(an.conf2pt)
+            self._conf2pt[nxnode] = an.conf2pt
         self._linker_constr = And(linker_constr)
         self._compatibility_constr = And(compatibility_constr)
         self._conf_formula = And(conf_formulas)

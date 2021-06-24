@@ -1,18 +1,16 @@
-import fractions
-
 from rel_tools import RelTools
-from pysmt.shortcuts import *
 from pysmt.optimization.goal import MinimizationGoal
-from pysmt.logics import Logic
 import time
+from approch import Hybrid, Enumerative
+
 class Dse:
     def __init__(self, graph):
-        self._r = RelTools(graph)
+        self._graph = graph
 
-    def __extract_cost_formula(self):
+    def __extract_cost(self, r):
         cost_constr = []
         node_costs = []
-        for nx_node, an in self._r.nxnode2archnode.items():
+        for nx_node, an in r.nxnode2archnode.items():
             node_cost = Symbol(nx_node + "_COST", REAL)
             node_costs.append(node_cost)
             for cfg, pt in an.conf2pt.items():
@@ -24,18 +22,29 @@ class Dse:
         cost = Symbol("cost", REAL)
         return cost, And(Equals(cost, Plus(node_costs)), cost_assignments)
 
-    def optimize(self, benchmark=None):
-        cost, cost_formula = self.__extract_cost_formula()
-        rel, rel_formula = self._r.extract_reliability_formula()
-        cost_obj = MinimizationGoal(cost)
-        rel_obj = MinimizationGoal(rel)
-
+    def optimize(self, benchmark=None, approch="symbolic"):
         with Optimizer(name="z3") as opt:
-            opt.add_assertion(self._r.conf_formula)
-            opt.add_assertion(self._r.prob_constr)
-            opt.add_assertion(self._r.compatibility_constr)
-            opt.add_assertion(cost_formula)
+            if approch == "symbolic":
+                r = RelTools(self._graph)
+                cost, cost_formula = self.__extract_cost(r)
+                rel, rel_formula = r.extract_reliability_formula()
+                opt.add_assertion(r.prob_constr) # only in this case we need prob constraints
+            elif approch == "hybrid":
+                h = Hybrid(self._graph)
+                cost, cost_formula = h.extract_cost()
+                rel, rel_formula = h.extract_rel(cfg_type="BOOL")
+                #rel, rel_formula = h.extract_rel(cfg_type="INT")
+            else:
+                e = Enumerative(self._graph)
+                cost, cost_formula = e.extract_cost()
+                rel, rel_formula = e.extract_rel()
+
+            rel_obj = MinimizationGoal(rel)
+            cost_obj = MinimizationGoal(cost)
+            print(rel_formula)
+            print(cost_formula)
             opt.add_assertion(rel_formula)
+            opt.add_assertion(cost_formula)
             time_start = time.perf_counter()
             res = opt.pareto_optimize([cost_obj, rel_obj])
             print("[Optimizer] Find Pareto points...")
@@ -50,22 +59,22 @@ class Dse:
             if benchmark is not None: benchmark.optimization_time = time.perf_counter() - time_start
             return pareto_points
 
-'''
+
+import random
+from patterns import *
 import networkx as nx
-from patterns.pt_spec import *
-pt_lib1 = [
-    TmrV111Spec([NonFuncParamas(0.9, 1), NonFuncParamas(0.9, 2), NonFuncParamas(0.9, 3) ],
-                NonFuncParamas(0.9, 5)),
-    TmrV111Spec([NonFuncParamas(0.1,3), NonFuncParamas(0.3,5), NonFuncParamas(0.03,3)],
-                NonFuncParamas(0.2,6)),
-    TmrV111Spec([NonFuncParamas(0.1, 6), NonFuncParamas(0.3, 5), NonFuncParamas(0.03, 3)],
-                NonFuncParamas(0.1, 6)),
-    TmrV111Spec([NonFuncParamas(0.7,3), NonFuncParamas(0.3,1), NonFuncParamas(0.03,3)],
-                NonFuncParamas(0.2,6))
-]
 
+random.seed(a=1, version=2)
+pt_lib1 = [TmrV111Spec([NonFuncParamas(random.uniform(0,1), random.randrange(20)),
+                        NonFuncParamas(random.uniform(0,1), random.randrange(20)),
+                        NonFuncParamas(random.uniform(0,1), random.randrange(20))],
+                       NonFuncParamas(random.uniform(0,1), random.randrange(20))),
+           TmrV111Spec([NonFuncParamas(random.uniform(0, 1),random.randrange(20)),
+                        NonFuncParamas(random.uniform(0, 1), random.randrange(20)),
+                        NonFuncParamas(random.uniform(0, 1),random.randrange(20))],
+                       NonFuncParamas(random.uniform(0, 1),random.randrange(20)))
+           ]
 
-# (A & B) | C: 110 - 111 - 001 - 011 - 101 10,01,11
 g = nx.DiGraph()
 g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                     ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
@@ -75,9 +84,6 @@ g.add_edge('S1', 'C1')
 g.add_edge('C1', 'C2')
 
 
-o = Dse(g)
-res = o.optimize()
-
-for oname in get_env().factory.all_solvers(logic=QF_NRA): print(oname)
-for oname in get_env().factory.all_optimizers(logic=QF_NRA): print(oname)
-'''
+d = Dse(g)
+res = d.optimize(approch="hybrid")
+print(res)
