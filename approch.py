@@ -55,12 +55,13 @@ class Enumerative:
 
 
 class Hybrid:
-    def __init__(self, graph):
+    def __init__(self, graph, cfg_encoding="BOOL"):
         self._graph = graph
         self._rel = Symbol("R", REAL)
         self._cost = Symbol("COST", REAL)
         self._n_cfg = 1
         self.r = RelTools(self._graph)
+        self._cfg_encoding = cfg_encoding
         # Prepare list of libraries: [[lib1], [lib2], ...]
         for node in self._graph.nodes:
             if self._graph.nodes[node]["type"] == "COMP":
@@ -76,24 +77,31 @@ class Hybrid:
         for idx, combination in enumerate(itertools.product(*cfgs_node)):
             yield Equals(self._cfg_id, Int(idx)), And([*combination])
 
+
     def extract_cost(self):
         enum_cost = []
-        pt_node= []
+        cfgs_node = []
+        all_cfg2pt = {}
         for node, conf2pt in self.r.conf2pt.items():
-            pt_node.append(list(conf2pt.values()))
-        pbar = tqdm(total=self._n_cfg, desc="Finding Costs")
-        for idx, combination in enumerate(itertools.product(*pt_node)):
+            cfgs_node.append(list(conf2pt.keys()))
+            for cfg, pt in conf2pt.items():
+                all_cfg2pt[cfg] = pt
+        pbar = tqdm(total=self._n_cfg, desc="Finding Reliabilities")
+        for idx, combination in enumerate(itertools.product(*cfgs_node)):
             pbar.update(1)
             comb = [*combination]
             cost = 0
-            for pt in comb:
-                for params in pt.param_list:
+            for cfg in comb:
+                for params in all_cfg2pt[cfg].param_list:
                   cost = cost + params.cost
-            enum_cost.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._cost, Real(cost))))
+            if self._cfg_encoding == "INT":
+                enum_cost.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._cost, Real(cost))))
+            else:
+                enum_cost.append(Implies(And(comb), Equals(self._cost, Real(cost))))
         pbar.close()
         return self._cost, And(And(enum_cost), LT(self._cfg_id, Int(self._n_cfg)))
 
-    def extract_rel(self, cfg_type="INT"):
+    def extract_rel(self):
         rel_symbol, formula = self.r.extract_reliability_formula()
         enum_rel = []
         cfgs_node = []
@@ -110,10 +118,10 @@ class Hybrid:
                 solver.add_assertion(self.r.prob_constr)
                 solver.solve()
                 rel = solver.get_value(rel_symbol)
-            if cfg_type == "INT": enum_rel.append(Implies(int_cfg, Equals(self._rel, rel)))
+            if self._cfg_encoding == "INT": enum_rel.append(Implies(int_cfg, Equals(self._rel, rel)))
             else: enum_rel.append(Implies(bool_cfg, Equals(self._rel, rel)))
         pbar.close()
-        if cfg_type == "BOOL": res = self._rel, And(And(enum_rel), self.r.conf_formula)
+        if self._cfg_encoding == "BOOL": res = self._rel, And(And(enum_rel), self.r.conf_formula)
         else: res = self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
         return res
 

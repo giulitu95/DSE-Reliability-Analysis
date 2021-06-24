@@ -1,3 +1,5 @@
+import fractions
+
 from rel_tools import RelTools
 from pysmt.optimization.goal import MinimizationGoal
 import time
@@ -30,19 +32,16 @@ class Dse:
                 rel, rel_formula = r.extract_reliability_formula()
                 opt.add_assertion(r.prob_constr) # only in this case we need prob constraints
             elif approch == "hybrid":
-                h = Hybrid(self._graph)
+                h = Hybrid(self._graph, cfg_encoding="BOOL")
                 cost, cost_formula = h.extract_cost()
-                rel, rel_formula = h.extract_rel(cfg_type="BOOL")
+                rel, rel_formula = h.extract_rel()
                 #rel, rel_formula = h.extract_rel(cfg_type="INT")
             else:
                 e = Enumerative(self._graph)
                 cost, cost_formula = e.extract_cost()
                 rel, rel_formula = e.extract_rel()
-
             rel_obj = MinimizationGoal(rel)
             cost_obj = MinimizationGoal(cost)
-            print(rel_formula)
-            print(cost_formula)
             opt.add_assertion(rel_formula)
             opt.add_assertion(cost_formula)
             time_start = time.perf_counter()
@@ -78,12 +77,17 @@ pt_lib1 = [TmrV111Spec([NonFuncParamas(random.uniform(0,1), random.randrange(20)
 g = nx.DiGraph()
 g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                     ("C1", {'type': 'COMP', 'pt_library': pt_lib1}),
-                    ("C2", {'type': 'COMP', 'pt_library': pt_lib1})
+                    ("C2", {'type': 'COMP', 'pt_library': pt_lib1}),
+                    ("C3", {'type': 'COMP', 'pt_library': pt_lib1}),
 ])
 g.add_edge('S1', 'C1')
 g.add_edge('C1', 'C2')
+g.add_edge('C2', 'C3')
 
 
 d = Dse(g)
 res = d.optimize(approch="hybrid")
-print(res)
+for model, r in res:
+    rel = float(fractions.Fraction(r[1].serialize()))
+    cost = float(fractions.Fraction(r[0].serialize()))
+    print(r[0], rel)
