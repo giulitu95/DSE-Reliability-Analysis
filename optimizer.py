@@ -9,39 +9,22 @@ class Dse:
     def __init__(self, graph):
         self._graph = graph
 
-    def __extract_cost(self, r):
-        cost_constr = []
-        node_costs = []
-        for nx_node, an in r.nxnode2archnode.items():
-            node_cost = Symbol(nx_node + "_COST", REAL)
-            node_costs.append(node_cost)
-            for cfg, pt in an.conf2pt.items():
-                pt_cost = 0
-                for params in pt.param_list:
-                    pt_cost = pt_cost + params.cost
-                cost_constr.append(Implies(cfg, Equals(node_cost, Real(pt_cost))))
-        cost_assignments = And(cost_constr)
-        cost = Symbol("cost", REAL)
-        return cost, And(Equals(cost, Plus(node_costs)), cost_assignments)
-
     def optimize(self, benchmark=None, approch="symbolic"):
             if approch == "symbolic":
-                s = Symbolic(self._graph)
-                cost, cost_formula = s.extract_cost()
-                rel, rel_formula = s.extract_rel()
+                appr = Symbolic(self._graph)
+                cost, cost_formula = appr.extract_cost()
+                rel, rel_formula = appr.extract_rel()
             elif approch == "hybrid":
-                h = Hybrid(self._graph, cfg_encoding="BOOL")
-                cost, cost_formula = h.extract_cost()
-                rel, rel_formula = h.extract_rel()
+                appr = Hybrid(self._graph, cfg_encoding="BOOL")
+                cost, cost_formula = appr.extract_cost()
+                rel, rel_formula = appr.extract_rel()
                 #rel, rel_formula = h.extract_rel(cfg_type="INT")
             else:
-                e = Enumerative(self._graph)
-                cost, cost_formula = e.extract_cost()
-                rel, rel_formula = e.extract_rel()
+                appr = Enumerative(self._graph)
+                cost, cost_formula = appr.extract_cost()
+                rel, rel_formula = appr.extract_rel()
             rel_obj = MinimizationGoal(rel)
             cost_obj = MinimizationGoal(cost)
-            print(rel_formula.serialize())
-            print(cost_formula.serialize())
             with Optimizer(name="z3") as opt:
                 opt.add_assertion(rel_formula)
                 opt.add_assertion(cost_formula)
@@ -51,8 +34,13 @@ class Dse:
                 pareto_points = []
                 counter = 0
                 for model, r in res:
-                    pareto_points.append((model, r))
                     counter = counter + 1
+                    print("Solution " + str(counter))
+                    print("   Patterns:")
+                    print("   " + str(appr.get_patterns(model)))
+                    print("   Parameters:")
+                    print("   Cost: " + str(r[0]) + ", F-prob: ", str(float(fractions.Fraction(r[1].serialize()))))
+                    pareto_points.append((model, r))
                     print("[Optimizer] " + str(counter) + " pareto points found",
                           end="\r", flush=True)
                 print("[Optimizer] Done!")
@@ -66,7 +54,7 @@ if __name__ == "__main__":
     import plotly.express as px
     import pandas as pd
 
-    #random.seed(a=1, version=2)
+    random.seed(a=1, version=2)
     pt_lib1 = [TmrV111Spec([NonFuncParamas(random.uniform(0,0.1), random.randrange(20)),
                             NonFuncParamas(random.uniform(0,0.1), random.randrange(20)),
                             NonFuncParamas(random.uniform(0,0.1), random.randrange(20))],
@@ -93,10 +81,12 @@ if __name__ == "__main__":
     g = nx.DiGraph()
     g.add_nodes_from([  ("S1", {'type': 'SOURCE'}),
                         ("C1", {'type': 'COMP', 'pt_library': pt_lib3}),
-                        ("C2", {'type': 'COMP', 'pt_library': pt_lib3})
+                        ("C2", {'type': 'COMP', 'pt_library': pt_lib3}),
+                        ("C3", {'type': 'COMP', 'pt_library': pt_lib3})
     ])
     g.add_edge('S1', 'C1')
     g.add_edge('C1', 'C2')
+    g.add_edge('C2', 'C3')
 
     d = Dse(g)
     res = d.optimize(approch="hybrid")
@@ -107,11 +97,9 @@ if __name__ == "__main__":
         cost = float(fractions.Fraction(r[0].serialize()))
         rels.append(rel)
         costs.append(cost)
-        print(r[0], rel)
     df = pd.DataFrame(list(zip(rels, costs)),
                    columns =['Reliability', 'Cost'])
     sorted = df.sort_values(by=['Reliability'])
-    print(sorted)
     fig = px.line(sorted, x="Reliability", y="Cost")
     fig.update_traces(mode='markers+lines')
     #fig.show()

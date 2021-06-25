@@ -4,10 +4,24 @@ import copy
 from rel_tools import RelTools
 from tqdm import tqdm
 
-class Enumerative:
-    # TODO: it works only with compatible patterns!
+
+class Approch:
     def __init__(self, graph):
         self._graph = graph
+        self._r = RelTools(graph)
+    def get_patterns(self, model):
+        res = {}
+        for node, conf2pt in self._r.conf2pt.items():
+            for conf, pt in conf2pt.items():
+                if model.get_py_value(conf, model_completion=True):
+                    res[node] = pt
+        return res
+
+
+class Enumerative(Approch):
+    # TODO: it works only with compatible patterns!
+    def __init__(self, graph):
+        super().__init__(graph)
         self._n_cfg = 1
         self._ptlibs = []
         # Prepare list of libraries: [[lib1], [lib2], ...]
@@ -54,34 +68,26 @@ class Enumerative:
         return self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
 
 
-class Hybrid:
+class Hybrid(Approch):
     def __init__(self, graph, cfg_encoding="BOOL"):
-        self._graph = graph
+        super().__init__(graph)
         self._rel = Symbol("R", REAL)
         self._cost = Symbol("COST", REAL)
         self._n_cfg = 1
-        self.r = RelTools(self._graph)
         self._cfg_encoding = cfg_encoding
         # Prepare list of libraries: [[lib1], [lib2], ...]
         for node in self._graph.nodes:
             if self._graph.nodes[node]["type"] == "COMP":
                 lib = self._graph.nodes[node]["pt_library"]
                 self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesiona product
-                print(self._n_cfg)
         self._cfg_id = Symbol("cfg", INT)
 
-    def __gen_cfg(self, node2conf2pt):
-        cfgs_node= []
-        for node, conf2pt in node2conf2pt.items():
-            cfgs_node.append(list(conf2pt.keys()))
-        for idx, combination in enumerate(itertools.product(*cfgs_node)):
-            yield Equals(self._cfg_id, Int(idx)), And([*combination])
 
     def extract_cost(self):
         enum_cost = []
         cfgs_node = []
         all_cfg2pt = {}
-        for node, conf2pt in self.r.conf2pt.items():
+        for node, conf2pt in self._r.conf2pt.items():
             cfgs_node.append(list(conf2pt.keys()))
             for cfg, pt in conf2pt.items():
                 all_cfg2pt[cfg] = pt
@@ -98,13 +104,13 @@ class Hybrid:
             else:
                 enum_cost.append(Implies(And(comb), Equals(self._cost, Real(cost))))
         pbar.close()
-        return self._cost, And(And(enum_cost), self.r.conf_formula)
+        return self._cost, And(And(enum_cost), self._r.conf_formula)
 
     def extract_rel(self):
-        rel_symbol, formula = self.r.extract_reliability_formula()
+        rel_symbol, formula = self._r.extract_reliability_formula()
         enum_rel = []
         cfgs_node = []
-        for node, conf2pt in self.r.conf2pt.items():
+        for node, conf2pt in self._r.conf2pt.items():
             cfgs_node.append(list(conf2pt.keys()))
 
         with Solver(name="z3") as solver:
@@ -115,22 +121,22 @@ class Hybrid:
                 int_cfg = Equals(self._cfg_id, Int(idx))
                 solver.add_assertion(formula)
                 solver.add_assertion(bool_cfg)
-                solver.add_assertion(self.r.prob_constr)
+                solver.add_assertion(self._r.prob_constr)
                 solver.solve()
                 rel = solver.get_value(rel_symbol)
                 if self._cfg_encoding == "INT": enum_rel.append(Implies(int_cfg, Equals(self._rel, rel)))
                 else: enum_rel.append(Implies(bool_cfg, Equals(self._rel, rel)))
                 solver.reset_assertions()
             pbar.close()
-        if self._cfg_encoding == "BOOL": res = self._rel, And(And(enum_rel), self.r.conf_formula)
+        if self._cfg_encoding == "BOOL": res = self._rel, And(And(enum_rel), self._r.conf_formula)
         else: res = self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
         return res
 
 
-class Symbolic:
+
+class Symbolic(Approch):
     def __init__(self, graph):
-        self._graph = graph
-        self._r = RelTools(self._graph)
+        super().__init__(graph)
 
     def extract_cost(self):
         cost_constr = []
