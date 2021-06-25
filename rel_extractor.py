@@ -79,7 +79,7 @@ class Extractor:
             print("[Extractor] Done!")
         # map cudd index - pySMT variable
         self._idx2var = idx2var
-        #utils.bdd_dump_dot(self._formula, self._bdd_mng, self._idx2var)
+        utils.bdd_dump_dot(self._formula, self._bdd_mng, self._idx2var)
         self._f_symbols2prob = f_symbols2prob
         conf_symbol2type = {k: NodeType.CONFIG for k in cfg_symbols}
         fault_symbols2type = {k: NodeType.FAULT for k, _ in self._f_symbols2prob.items()}

@@ -84,6 +84,9 @@ class ArchNode:
                         Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voter_param.fault_prob))
                     )
                 )
+                if len(self._fault_atoms) > 3:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
             elif pt.pt_type == PatternType.TMR_V123:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
@@ -108,6 +111,9 @@ class ArchNode:
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
+                if len(self._fault_atoms) > 6:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[7:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
             elif pt.pt_type == PatternType.PLAIN:
                 if pt.pt_type not in pt_type2csa:
                     pt_def = PlainDefinition(comp_name, n_predecessors, self._fault_atoms[0])
@@ -120,6 +126,9 @@ class ArchNode:
                     conf,
                     Equals(self._f_atoms2prob[self._fault_atoms[0]], Real(pt.module_params[0]))
                 ))
+                if len(self._fault_atoms) > 1:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[2:]):  # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf, Equals(self._f_atoms2prob[f_atom], Real(0))))
             else:
                 NotImplementedError()
 
