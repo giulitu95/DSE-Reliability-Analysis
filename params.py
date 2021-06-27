@@ -8,3 +8,4 @@ __author__ = "Giuliano Turri"
 class NonFuncParamas(NamedTuple):
     fault_prob: float
     cost: float
+    power: float

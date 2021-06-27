@@ -4,24 +4,10 @@ import copy
 from rel_tools import RelTools
 from tqdm import tqdm
 
-
-class Approch:
-    def __init__(self, graph):
-        self._graph = graph
-        self._r = RelTools(graph)
-    def get_patterns(self, model):
-        res = {}
-        for node, conf2pt in self._r.conf2pt.items():
-            for conf, pt in conf2pt.items():
-                if model.get_py_value(conf, model_completion=True):
-                    res[node] = pt
-        return res
-
-
-class Enumerative(Approch):
+class Enumerative:
     # TODO: it works only with compatible patterns!
     def __init__(self, graph):
-        super().__init__(graph)
+        self._graph = graph
         self._n_cfg = 1
         self._ptlibs = []
         # Prepare list of libraries: [[lib1], [lib2], ...]
@@ -44,6 +30,16 @@ class Enumerative(Approch):
                 cost = cost + params.cost
             enum_cost.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._cost, Real(cost))))
         return self._cost, And(And(enum_cost), LT(self._cfg_id, Int(self._n_cfg)))
+
+    def extract_power(self):
+        enum_power = []
+        for idx, combination in enumerate(itertools.product(*self._ptlibs)):
+            comb = [*combination][0]
+            cost = 0
+            for params in comb.param_list:
+                power = power + params.power
+            enum_power.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._power, Real(power))))
+        return self._power, And(And(enum_power), LT(self._cfg_id, Int(self._n_cfg)))
 
     def extract_rel(self):
         # Perform the cartesian product to find all combinations and create the graph
@@ -68,49 +64,81 @@ class Enumerative(Approch):
         return self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
 
 
-class Hybrid(Approch):
+class Hybrid:
     def __init__(self, graph, cfg_encoding="BOOL"):
-        super().__init__(graph)
+        self._graph = graph
         self._rel = Symbol("R", REAL)
         self._cost = Symbol("COST", REAL)
+        self._power = Symbol("POWER", REAL)
         self._n_cfg = 1
+        self.r = RelTools(self._graph)
         self._cfg_encoding = cfg_encoding
         # Prepare list of libraries: [[lib1], [lib2], ...]
         for node in self._graph.nodes:
             if self._graph.nodes[node]["type"] == "COMP":
                 lib = self._graph.nodes[node]["pt_library"]
-                self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesiona product
+                self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesian product
+                print(self._n_cfg)
         self._cfg_id = Symbol("cfg", INT)
 
+    def __gen_cfg(self, node2conf2pt):
+        cfgs_node= []
+        for node, conf2pt in node2conf2pt.items():
+            cfgs_node.append(list(conf2pt.keys()))
+        for idx, combination in enumerate(itertools.product(*cfgs_node)):
+            yield Equals(self._cfg_id, Int(idx)), And([*combination])
 
     def extract_cost(self):
         enum_cost = []
         cfgs_node = []
         all_cfg2pt = {}
-        for node, conf2pt in self._r.conf2pt.items():
+        for node, conf2pt in self.r.conf2pt.items():
             cfgs_node.append(list(conf2pt.keys()))
             for cfg, pt in conf2pt.items():
                 all_cfg2pt[cfg] = pt
-        pbar = tqdm(total=self._n_cfg, desc="Finding Reliabilities")
+        pbar = tqdm(total=self._n_cfg, desc="Finding Costs")
         for idx, combination in enumerate(itertools.product(*cfgs_node)):
             pbar.update(1)
             comb = [*combination]
             cost = 0
             for cfg in comb:
                 for params in all_cfg2pt[cfg].param_list:
-                  cost = cost + params.cost
+                    cost = cost + params.cost
             if self._cfg_encoding == "INT":
                 enum_cost.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._cost, Real(cost))))
             else:
                 enum_cost.append(Implies(And(comb), Equals(self._cost, Real(cost))))
         pbar.close()
-        return self._cost, And(And(enum_cost), self._r.conf_formula)
+        return self._cost, And(And(enum_cost), self.r.conf_formula)
+
+    def extract_power(self):
+        enum_power = []
+        cfgs_node = []
+        all_cfg2pt = {}
+        for node, conf2pt in self.r.conf2pt.items():
+            cfgs_node.append(list(conf2pt.keys()))
+            for cfg, pt in conf2pt.items():
+                all_cfg2pt[cfg] = pt
+        pbar = tqdm(total=self._n_cfg, desc="Finding Power consumptions")
+        for idx, combination in enumerate(itertools.product(*cfgs_node)):
+            pbar.update(1)
+            comb = [*combination]
+            power = 0
+            for cfg in comb:
+                for params in all_cfg2pt[cfg].param_list:
+                    power = power + params.power
+            if self._cfg_encoding == "INT":
+                enum_power.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._power, Real(power))))
+            else:
+                enum_power.append(Implies(And(comb), Equals(self._power, Real(power))))
+        pbar.close()
+        return self._power, And(And(enum_power), self.r.conf_formula)
 
     def extract_rel(self):
-        rel_symbol, formula = self._r.extract_reliability_formula()
+        rel_symbol, formula = self.r.extract_reliability_formula()
         enum_rel = []
         cfgs_node = []
-        for node, conf2pt in self._r.conf2pt.items():
+        for node, conf2pt in self.r.conf2pt.items():
             cfgs_node.append(list(conf2pt.keys()))
 
         with Solver(name="z3") as solver:
@@ -121,22 +149,22 @@ class Hybrid(Approch):
                 int_cfg = Equals(self._cfg_id, Int(idx))
                 solver.add_assertion(formula)
                 solver.add_assertion(bool_cfg)
-                solver.add_assertion(self._r.prob_constr)
+                solver.add_assertion(self.r.prob_constr)
                 solver.solve()
                 rel = solver.get_value(rel_symbol)
                 if self._cfg_encoding == "INT": enum_rel.append(Implies(int_cfg, Equals(self._rel, rel)))
                 else: enum_rel.append(Implies(bool_cfg, Equals(self._rel, rel)))
                 solver.reset_assertions()
             pbar.close()
-        if self._cfg_encoding == "BOOL": res = self._rel, And(And(enum_rel), self._r.conf_formula)
+        if self._cfg_encoding == "BOOL": res = self._rel, And(And(enum_rel), self.r.conf_formula)
         else: res = self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
         return res
 
 
-
-class Symbolic(Approch):
+class Symbolic:
     def __init__(self, graph):
-        super().__init__(graph)
+        self._graph = graph
+        self._r = RelTools(self._graph)
 
     def extract_cost(self):
         cost_constr = []
@@ -152,6 +180,21 @@ class Symbolic(Approch):
         cost_assignments = And(cost_constr)
         cost = Symbol("cost", REAL)
         return cost, And([Equals(cost, Plus(node_costs)), cost_assignments, self._r.conf_formula])
+
+    def extract_power(self):
+        power_constr = []
+        node_powers = []
+        for nx_node, an in self._r.nxnode2archnode.items():
+            node_power = Symbol(nx_node + "_POWER", REAL)
+            node_powers.append(node_power)
+            for cfg, pt in an.conf2pt.items():
+                pt_power = 0
+                for params in pt.param_list:
+                    pt_power = pt_power + params.power
+                power_constr.append(Implies(cfg, Equals(node_power, Real(pt_power))))
+        power_assignments = And(power_constr)
+        power = Symbol("power", REAL)
+        return power, And([Equals(power, Plus(node_powers)), power_assignments, self._r.conf_formula])
 
     def extract_rel(self):
         rel, formula = self._r.extract_reliability_formula()

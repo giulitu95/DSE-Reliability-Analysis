@@ -85,6 +85,7 @@ class TmrV123(Pattern):
         subcomp_beh_formula.extend([voter.behaviour_formula for voter in voters])
         self._behaviour_formula = And(subcomp_beh_formula)
 
+TmrV123Definition
 
 '''# Test - Example
 if __name__ == "__main__":

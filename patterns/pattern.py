@@ -14,6 +14,7 @@ class PatternType(Enum):
     TMR_V111 = 1
     TMR_V123 = 2
     PLAIN = 3
+    TMR_V010 = 4
     # ...
 
 
