@@ -206,5 +206,3 @@ if __name__ == "__main__":
 # # ('[C1-TMR_V111].concr.i4' <-> (C1.TMR_V111.M2.i0 = C1_nom.i0)) & 
 # # ('[C1-TMR_V111].concr.i5' <-> (C1.TMR_V111.M2.i1 = C1_nom.i1))) & 
 # # ((C1.TMR_V111.V.o0 = C1_nom.o0) <-> '[C1-TMR_V111].abstr.o0'))'''
-
-

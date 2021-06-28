@@ -42,5 +42,3 @@ class Stage(Component):
         :return:  the nominal module of the stage
         """
         return self._nominal_module
-
-

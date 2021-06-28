@@ -4,7 +4,6 @@ import copy
 from rel_tools import RelTools
 from tqdm import tqdm
 
-
 class Approch:
     def __init__(self, graph):
         self._graph = graph
@@ -17,7 +16,7 @@ class Approch:
                     res[node] = pt
         return res
 
-
+# Approach 1: Enumerative
 class Enumerative(Approch):
     # TODO: it works only with compatible patterns!
     def __init__(self, graph):
@@ -28,13 +27,16 @@ class Enumerative(Approch):
         for node in self._graph.nodes:
             if self._graph.nodes[node]["type"] == "COMP":
                 lib = self._graph.nodes[node]["pt_library"]
-                self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesiona product
+                self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesian product
                 self._ptlibs.append(lib)
         #self._cfg_bv = Symbol("cfg", BVType(math.ceil(math.log(n_cfg, 2))))
         self._cfg_id = Symbol("cfg", INT)
         self._rel = Symbol("R", REAL)
         self._cost = Symbol("COST", REAL)
+        self._power = Symbol("POWER", REAL)
+        self._size = Symbol("SIZE", REAL)
 
+    #Cost function: Cost
     def extract_cost(self):
         enum_cost = []
         for idx, combination in enumerate(itertools.product(*self._ptlibs)):
@@ -45,6 +47,32 @@ class Enumerative(Approch):
             enum_cost.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._cost, Real(cost))))
         return self._cost, And(And(enum_cost), LT(self._cfg_id, Int(self._n_cfg)))
 
+    # Cost function: Power Consumption
+    def extract_power(self):
+        enum_power = []
+        for idx, combination in enumerate(itertools.product(*self._ptlibs)):
+            comb = [*combination][0]
+            cost = 0
+            for params in comb.param_list:
+                power = power + params.power
+            enum_power.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._power, Real(power))))
+        return self._power, And(And(enum_power), LT(self._cfg_id, Int(self._n_cfg)))
+
+    # Cost function: Size area
+    def extract_size(self):
+        enum_size = []
+        for idx, combination in enumerate(itertools.product(*self._ptlibs)):
+            comb = [*combination][0]
+            cost = 0
+            for params in comb.param_list:
+                size = size + params.size
+            enum_size.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._size, Real(size))))
+        return self._size, And(And(enum_size), LT(self._cfg_id, Int(self._n_cfg)))
+
+    # Cost function: Execution Time
+    # TBD?
+
+    # Cost function: Reliability
     def extract_rel(self):
         # Perform the cartesian product to find all combinations and create the graph
         enum_rel = []
@@ -67,12 +95,14 @@ class Enumerative(Approch):
             enum_rel.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._rel, rel)))
         return self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
 
-
+# Approach 2: Hybrid
 class Hybrid(Approch):
     def __init__(self, graph, cfg_encoding="BOOL"):
         super().__init__(graph)
         self._rel = Symbol("R", REAL)
         self._cost = Symbol("COST", REAL)
+        self._power = Symbol("POWER", REAL)
+        self._size = Symbol("SIZE", REAL)
         self._n_cfg = 1
         self._cfg_encoding = cfg_encoding
         # Prepare list of libraries: [[lib1], [lib2], ...]
@@ -82,7 +112,7 @@ class Hybrid(Approch):
                 self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesiona product
         self._cfg_id = Symbol("cfg", INT)
 
-
+    # Cost function: Cost
     def extract_cost(self):
         enum_cost = []
         cfgs_node = []
@@ -91,7 +121,7 @@ class Hybrid(Approch):
             cfgs_node.append(list(conf2pt.keys()))
             for cfg, pt in conf2pt.items():
                 all_cfg2pt[cfg] = pt
-        pbar = tqdm(total=self._n_cfg, desc="Finding Reliabilities")
+        pbar = tqdm(total=self._n_cfg, desc="Finding Costs")
         for idx, combination in enumerate(itertools.product(*cfgs_node)):
             pbar.update(1)
             comb = [*combination]
@@ -106,6 +136,55 @@ class Hybrid(Approch):
         pbar.close()
         return self._cost, And(And(enum_cost), self._r.conf_formula)
 
+    # Cost function: Power Consumption
+    def extract_power(self):
+        enum_power = []
+        cfgs_node = []
+        all_cfg2pt = {}
+        for node, conf2pt in self._r.conf2pt.items():
+            cfgs_node.append(list(conf2pt.keys()))
+            for cfg, pt in conf2pt.items():
+                all_cfg2pt[cfg] = pt
+        pbar = tqdm(total=self._n_cfg, desc="Finding Power consumptions")
+        for idx, combination in enumerate(itertools.product(*cfgs_node)):
+            pbar.update(1)
+            comb = [*combination]
+            power = 0
+            for cfg in comb:
+                for params in all_cfg2pt[cfg].param_list:
+                    power = power + params.power
+            if self._cfg_encoding == "INT":
+                enum_power.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._power, Real(power))))
+            else:
+                enum_power.append(Implies(And(comb), Equals(self._power, Real(power))))
+        pbar.close()
+        return self._power, And(And(enum_power), self._r.conf_formula)
+
+    # Cost function: Size Area
+    def extract_size(self):
+        enum_size = []
+        cfgs_node = []
+        all_cfg2pt = {}
+        for node, conf2pt in self._r.conf2pt.items():
+            cfgs_node.append(list(conf2pt.keys()))
+            for cfg, pt in conf2pt.items():
+                all_cfg2pt[cfg] = pt
+        pbar = tqdm(total=self._n_cfg, desc="Finding Size areas")
+        for idx, combination in enumerate(itertools.product(*cfgs_node)):
+            pbar.update(1)
+            comb = [*combination]
+            size = 0
+            for cfg in comb:
+                for params in all_cfg2pt[cfg].param_list:
+                    size = size + params.size
+            if self._cfg_encoding == "INT":
+                enum_size.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._size, Real(size))))
+            else:
+                enum_size.append(Implies(And(comb), Equals(self._size, Real(size))))
+        pbar.close()
+        return self._size, And(And(enum_size), self._r.conf_formula)
+
+    # Cost function: Reliability
     def extract_rel(self):
         rel_symbol, formula = self._r.extract_reliability_formula()
         enum_rel = []
@@ -132,12 +211,12 @@ class Hybrid(Approch):
         else: res = self._rel, And(And(enum_rel), LT(self._cfg_id, Int(self._n_cfg)))
         return res
 
-
-
+# Approach 3: Symbolic
 class Symbolic(Approch):
     def __init__(self, graph):
         super().__init__(graph)
 
+    # Cost function: Cost
     def extract_cost(self):
         cost_constr = []
         node_costs = []
@@ -153,6 +232,39 @@ class Symbolic(Approch):
         cost = Symbol("cost", REAL)
         return cost, And([Equals(cost, Plus(node_costs)), cost_assignments, self._r.conf_formula])
 
+    # Cost function: Power Consumption
+    def extract_power(self):
+        power_constr = []
+        node_powers = []
+        for nx_node, an in self._r.nxnode2archnode.items():
+            node_power = Symbol(nx_node + "_POWER", REAL)
+            node_powers.append(node_power)
+            for cfg, pt in an.conf2pt.items():
+                pt_power = 0
+                for params in pt.param_list:
+                    pt_power = pt_power + params.power
+                power_constr.append(Implies(cfg, Equals(node_power, Real(pt_power))))
+        power_assignments = And(power_constr)
+        power = Symbol("power", REAL)
+        return power, And([Equals(power, Plus(node_powers)), power_assignments, self._r.conf_formula])
+
+    # Cost function: Size Area
+    def extract_size(self):
+        size_constr = []
+        node_sizes = []
+        for nx_node, an in self._r.nxnode2archnode.items():
+            node_size = Symbol(nx_node + "_SIZE", REAL)
+            node_sizes.append(node_size)
+            for cfg, pt in an.conf2pt.items():
+                pt_size = 0
+                for params in pt.param_list:
+                    pt_size = pt_size + params.size
+                size_constr.append(Implies(cfg, Equals(node_size, Real(pt_size))))
+        size_assignments = And(size_constr)
+        size = Symbol("size", REAL)
+        return size, And([Equals(size, Plus(node_sizes)), size_assignments, self._r.conf_formula])
+
+    # Cost function: Reliability
     def extract_rel(self):
         rel, formula = self._r.extract_reliability_formula()
         return rel, And([formula, self._r.conf_formula, self._r.prob_constr])

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from patterns import PatternType, TmrV111Definition, TmrV123Definition, PlainDefinition
+from patterns import PatternType, TmrV111Definition, TmrV123Definition, PlainDefinition, TmrV010Definition
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
@@ -307,7 +307,3 @@ if __name__ == "__main__":
 
     qe1 = an1.get_qe_formulas()
     qe2 = an2.get_qe_formulas()'''
-
-
-
-

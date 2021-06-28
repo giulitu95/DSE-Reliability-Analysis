@@ -2,6 +2,7 @@ from params import NonFuncParamas
 from patterns import PatternType
 import patterns.tmr_v111 as tmr_v111
 import patterns.tmr_v123 as tmr_v123
+import patterns.tmr_v010 as tmr_v010
 import patterns.plain as plain
 
 __author__ = "Giuliano Turri, Antonio Tierno"
@@ -75,4 +76,22 @@ class PlainSpec(PatternSpec):
         return self._module_params
 
 
+class TmrV010Spec(PatternSpec):
+    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+        """
+        Create a specification of a TMR-V010
+        :param modules_probs: list of length 3 containing the probabilities of the 3 modules
+        :param voter_probs: fault probability of the voter
+        """
+        self._modules_params = modules_params
+        self._voters_params = voters_params
+        super(TmrV010Spec, self).__init__(PatternType.TMR_V010, tmr_v010.TmrV010, modules_params + [voters_params])
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def voters_params(self):
+        return self._voters_params
 

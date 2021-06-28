@@ -66,5 +66,3 @@ if __name__ == "__main__":
     nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
     plain = Plain("C1", 1, Symbol("F0"), nominal_beh)
     print(plain.behaviour_formula.serialize())'''
-
-

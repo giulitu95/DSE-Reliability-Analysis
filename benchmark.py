@@ -1,6 +1,6 @@
 import fractions
 
-from patterns import TmrV111Spec, TmrV123Spec, PatternType, PlainSpec
+from patterns import TmrV111Spec, TmrV123Spec, PatternType, PlainSpec, TmrV010Spec
 from params import NonFuncParamas
 from rel_tools import RelTools
 import networkx as nx
