@@ -106,7 +106,6 @@ class RelTools:
             p_formula,
             converter.convert(self._compatibility_constr)
         )
-        if benchmark is not None: benchmark.mincutsets_time = time.perf_counter() - time_start
         print("[Architecture] Done!")
         extractor = Extractor(p_formula, mng, converter.idx2var, self._conf_atoms, self._f_atoms2prob, benchmark=benchmark)
         time_start = time.perf_counter()
@@ -156,7 +155,7 @@ class RelTools:
         return self._conf_atoms
 
     @property
-    def conf2pt(self):
+    def node2conf2pt(self):
         return self._conf2pt
 
     @property

@@ -1,46 +1,47 @@
-import fractions
-
 from patterns import TmrV111Spec, TmrV123Spec, PatternType, PlainSpec, TmrV010Spec
+from patterns import TmrV111Spec, TmrV123Spec, PatternType, PlainSpec
 from params import NonFuncParamas
 from rel_tools import RelTools
 import networkx as nx
 import csv
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import random
 from optimizer import Dse
+
 
 class Benchmark():
     def __init__(self):
         self.arch_creation_time = None
         self.bdd_qelim_time = None
-        self.mincutsets_time= None
         self.sift = False
         self.sift_time= None
         self.rel_extraction_time = None
         self.total_ext_time = None
         self.optimization_time = None
+        self.rel_enum_time = None
 
     @staticmethod
     def get_header():
         return ["arch_creation_time",
                 "bdd_qelim_time",
-                "mincutsets_time",
                 "sift",
                 "sift_time",
                 "rel_extraction_time",
                 "total_ext_time",
-                "optimization_time"]
+                "optimization_time",
+                "rel_enum_time"]
 
     def get_values(self):
         return [self.arch_creation_time,
                 self.bdd_qelim_time,
-                self.mincutsets_time,
                 self.sift,
                 self.sift_time,
                 self.rel_extraction_time,
                 self.total_ext_time,
-                self.optimization_time]
+                self.optimization_time,
+                self.rel_enum_time]
 
 
 random.seed(a=1, version=2)
@@ -72,11 +73,11 @@ def test_chain_same_pt(file_name, pt_type, max_n_patt = 50, len_chain = 20):
             print("~" * 10 + " " + str(len) + " patterns " + "~" * 10)
             # Create pt_lib
             if pt_type == PatternType.TMR_V111:
-                pt_lib = [TmrV111Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)],
-                        NonFuncParamas(0.1,1))] * n
+                pt_lib = [TmrV111Spec([NonFuncParamas(0.1,1,1,1), NonFuncParamas(0.2,1,1,1), NonFuncParamas(0.02,1,1,1), NonFuncParamas(0.1,1,1,1)],
+                        NonFuncParamas(0.1,1,1,1))] * n
             elif pt_type == PatternType.TMR_V123:
-                pt_lib = [TmrV123Spec([NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)],
-                            [NonFuncParamas(0.1,1), NonFuncParamas(0.2,1), NonFuncParamas(0.02,1), NonFuncParamas(0.1,1)])] * n
+                pt_lib = [TmrV123Spec([NonFuncParamas(0.1,1,1,1), NonFuncParamas(0.2,1,1,1), NonFuncParamas(0.02,1,1,1), NonFuncParamas(0.1,1,1,1)],
+                            [NonFuncParamas(0.1,1,1,1), NonFuncParamas(0.2,1,1,1), NonFuncParamas(0.02,1,1,1), NonFuncParamas(0.1,1,1,1)])] * n
             # Create graph
             graph = nx.DiGraph()
             graph.add_nodes_from([("S", {'type': 'SOURCE'})])
@@ -97,35 +98,35 @@ def test_chain_opt(file_name, max_len=6):
             print("~" * 10 + " " + str(len) + " len chain " + "~" * 10)
             graph = nx.DiGraph()
             graph.add_nodes_from([("S", {'type': 'SOURCE'})])
-            nodes = [("C" + str(idx), {'type': 'COMP', 'pt_library': [TmrV111Spec([NonFuncParamas(random.uniform(0,1), random.randrange(20)),
-                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20)),
-                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20))],
-                                                                                  NonFuncParamas(random.uniform(0,1), random.randrange(20))),
+            nodes = [("C" + str(idx), {'type': 'COMP', 'pt_library': [TmrV111Spec([NonFuncParamas(random.uniform(0,1), random.randrange(20),random.randrange(20),1),
+                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20),random.randrange(20),1),
+                                                                                   NonFuncParamas(random.uniform(0,1), random.randrange(20),random.randrange(20),1)],
+                                                                                  NonFuncParamas(random.uniform(0,1), random.randrange(20),random.randrange(20),1)),
                                                                       TmrV111Spec([NonFuncParamas(random.uniform(0, 1),
-                                                                                                  random.randrange(20)),
+                                                                                                  random.randrange(20),random.randrange(20),1),
                                                                                    NonFuncParamas(random.uniform(0, 1),
-                                                                                                  random.randrange(20)),
+                                                                                                  random.randrange(20),random.randrange(20),1),
                                                                                    NonFuncParamas(random.uniform(0, 1),
                                                                                                   random.randrange(
-                                                                                                      20))],
+                                                                                                      20),random.randrange(20),1)],
                                                                                   NonFuncParamas(random.uniform(0, 1),
-                                                                                                 random.randrange(20))),
+                                                                                                 random.randrange(20),random.randrange(20),1)),
                                                                       TmrV111Spec([NonFuncParamas(random.uniform(0, 1),
-                                                                                                  random.randrange(20)),
+                                                                                                  random.randrange(20),random.randrange(20),1),
                                                                                    NonFuncParamas(random.uniform(0, 1),
-                                                                                                  random.randrange(20)),
+                                                                                                  random.randrange(20),random.randrange(20),1),
                                                                                    NonFuncParamas(random.uniform(0, 1),
                                                                                                   random.randrange(
-                                                                                                      20))],
+                                                                                                      20),random.randrange(20),1)],
                                                                                   NonFuncParamas(random.uniform(0, 1),
-                                                                                                 random.randrange(20)))
+                                                                                                 random.randrange(20),random.randrange(20),1))
                                                                       ]}) for idx in range(len)]
             graph.add_nodes_from(nodes)
             edges = [("C" + str(idx), "C" + str(idx + 1)) for idx in range(len - 1)]
             edges.append(("S", "C0"))
             graph.add_edges_from(edges)
             opt = Dse(graph)
-            opt.optimize(benchmark=benchmark)
+            opt.optimize(approch="symbolic", benchmark=benchmark)
             writer.writerow(benchmark.get_values() + [len])
 
 def plot_1pt_chain_benchmark(file, title):
@@ -183,10 +184,46 @@ def plot_chain_same_pt(file, title):
                   title=title)
     fig.show()
 
+
+# 729 -> 15 sec
 def plot_opt(file, title):
     df = pd.read_csv(file)
-    fig = px.line(df, x="n_pt", y="optimization_time")
+    fig = go.Figure()
+    fig.add_trace(go.Histogram(histfunc="sum", name="Optimization", x=df["n_pt"], y=df["optimization_time"], nbinsx=df.shape[0]))
+    fig.add_trace(go.Histogram(histfunc="sum", name="Rel. Extraction", x=df["n_pt"], y=df["rel_enum_time"], nbinsx=df.shape[0]))
+    fig.update_layout(barmode="stack")
+    fig.update_layout(bargap=0.2)
     fig.show()
+
+
+def plot_compare_opt(file_list, title):
+    dfs = []
+    fig = go.Figure()
+    for file in file_list:
+        dfs.append(pd.read_csv(file))
+    symbolic_opt_time_df = dfs[0][["n_pt", "optimization_time"]].copy()
+    symbolic_opt_time_df.columns = ["len", "time"]
+    symbolic_opt_time_df["approch"] = "symbolic"
+    symbolic_opt_time_df["type_time"] = "opt"
+
+
+    hybrid_opt_time_df = dfs[1].head(dfs[0].shape[0])[["n_pt", "optimization_time"]].copy()
+    hybrid_opt_time_df.columns = ["len", "time"]
+    hybrid_opt_time_df["approch"] = "hybrid"                                
+    hybrid_opt_time_df["type_time"] = "opt"
+
+    hybrid_ext_time_df = dfs[1].head(dfs[0].shape[0])[["n_pt", "rel_enum_time"]].copy()
+    hybrid_ext_time_df.columns = ["len", "time"]
+    hybrid_ext_time_df["approch"] = "hybrid"
+    hybrid_ext_time_df["Hybrid"] = "ext"
+    hybrid_res = pd.concat([hybrid_ext_time_df, hybrid_opt_time_df], axis=0)
+    #fig = px.histogram(res, x="n_pt", y="optimization_time", nbins=len(res.index))
+    #fig.show()
+    print(hybrid_ext_time_df)
+    fig.add_trace(go.Bar(y=hybrid_res["time"], x=hybrid_res["len"], name="Hybrid", marker=dict(color=["blue"]*int(hybrid_res.shape[0]/2) + ["green"]*int(hybrid_res.shape[0]/2))))
+    fig.add_trace(go.Bar(y=symbolic_opt_time_df["time"], x=symbolic_opt_time_df["len"], name="Symbolic"))
+    fig.show()
+
 
 def plot_compare_pt(file_list):
     df_map = {pt_name: pd.read_csv(file) for file, pt_name in file_list.items()}
@@ -204,8 +241,8 @@ def plot_compare_pt(file_list):
     fig.show()
 
 lib_1pt = [
-    TmrV111Spec([NonFuncParamas(0.2,1), NonFuncParamas(0.3,1), NonFuncParamas(0.03,1)],
-                NonFuncParamas(0.2,1))
+    TmrV111Spec([NonFuncParamas(0.2,1, 2,1), NonFuncParamas(0.3,1, 2,1), NonFuncParamas(0.03,1, 2,1)],
+                NonFuncParamas(0.2,1, 2,1))
            ]
 
 
@@ -213,10 +250,11 @@ lib_1pt = [
 #test_chain_same_pt("benchmarks/chain_same_pt_tmp.csv", PatternType.TMR_V123)
 #plot_1pt_chain_benchmark("benchmarks/v111_tmp_chain.csv", "tmr-v111")
 #plot_chain_same_pt()
-#plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111",
-#                 "benchmarks/plain_chain.csv": "plain",
-#                 "benchmarks/tmr_V123_chain.csv": "tmr-v123",
-#                 "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111",
-#                 "benchmarks/V123_V111_plain_chain.csv": "tmr-v123, tmr-v111, plain"})
-test_chain_opt(file_name="benchmarks/2pt_opt_chain.csv", max_len=3)
-#plot_opt("benchmarks/2pt_opt_chain.csv", "opt")
+plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111",
+                 "benchmarks/plain_chain.csv": "plain",
+                 "benchmarks/tmr_V123_chain.csv": "tmr-v123",
+                 "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111",
+                 "benchmarks/V123_V111_plain_chain.csv": "tmr-v123, tmr-v111, plain"})
+#test_chain_opt(file_name="benchmarks/3pt_opt_chain_sym.csv", max_len=8)
+#plot_opt("benchmarks/3pt_opt_chain.csv", "opt")
+#plot_compare_opt(["benchmarks/3pt_opt_chain_sym.csv", "benchmarks/3pt_opt_chain.csv"],"test")

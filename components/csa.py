@@ -7,7 +7,6 @@ from pysmt.shortcuts import *
 import os
 from pysmt.parsing import parse
 from allsmt import allsmt
-
 __author__ = "Giuliano Turri"
 
 
