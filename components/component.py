@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-__author__ = "Giuliano Turri"
+__author__ = "Giuliano Turri, Antonio Tierno"
 
 
 class ComponentType(Enum):
@@ -17,6 +17,7 @@ class ComponentType(Enum):
     ABSTRACTOR = 6
     CSA = 7
     TLE = 8
+    COMPARATOR = 9
 
 
 class Component:

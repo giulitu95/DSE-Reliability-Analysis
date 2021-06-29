@@ -59,7 +59,7 @@ class Enumerative(Approch):
         enum_power = []
         for idx, combination in enumerate(itertools.product(*self._ptlibs)):
             comb = [*combination][0]
-            cost = 0
+            power = 0
             for params in comb.param_list:
                 power = power + params.power
             enum_power.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._power, Real(power))))
@@ -70,7 +70,7 @@ class Enumerative(Approch):
         enum_size = []
         for idx, combination in enumerate(itertools.product(*self._ptlibs)):
             comb = [*combination][0]
-            cost = 0
+            size = 0
             for params in comb.param_list:
                 size = size + params.size
             enum_size.append(Implies(Equals(self._cfg_id, Int(idx)), Equals(self._size, Real(size))))

@@ -4,6 +4,10 @@ from typing import NamedTuple
 
 __author__ = "Giuliano Turri, Antonio Tierno"
 
+'''
+Design objectives
+'''
+
 
 class NonFuncParamas(NamedTuple):
     fault_prob: float

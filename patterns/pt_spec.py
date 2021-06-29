@@ -1,5 +1,6 @@
 from params import NonFuncParamas
 from patterns import PatternType
+import patterns.cmp as cmp
 import patterns.tmr_v111 as tmr_v111
 import patterns.tmr_v123 as tmr_v123
 import patterns.tmr_v010 as tmr_v010
@@ -13,6 +14,7 @@ class PatternSpec:
         self._pt_type = pattern_type
         self._pt_class = pattern_class
         self._param_list = param_list
+
     @property
     def pt_type(self):
         return self._pt_type
@@ -24,6 +26,27 @@ class PatternSpec:
     @property
     def param_list(self):
         return self._param_list
+
+
+class CmpSpec(PatternSpec):
+    def __init__(self, modules_params: list, comparator_params: NonFuncParamas):
+        """
+        Create a specification of a CMP
+        :param modules_probs: list of length 2 containing the probabilities of the 2 modules
+        :param voter_probs: fault probability of the comparator
+        """
+
+        self._modules_params = modules_params
+        self._comparator_param = comparator_params
+        super(CmpSpec, self).__init__(PatternType.TMR_V111, tmr_v111.TmrV111, modules_params + [voter_params])
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def comparator_param(self):
+        return self._comparator_param
 
 
 class TmrV111Spec(PatternSpec):
@@ -69,7 +92,7 @@ class TmrV123Spec(PatternSpec):
 class PlainSpec(PatternSpec):
     def __init__(self, module_params: NonFuncParamas):
         self._module_params = module_params
-        super(PlainSpec,self).__init__(PatternType.PLAIN, plain.Plain, [self._module_params])
+        super(PlainSpec, self).__init__(PatternType.PLAIN, plain.Plain, [self._module_params])
 
     @property
     def module_params(self):
@@ -94,4 +117,3 @@ class TmrV010Spec(PatternSpec):
     @property
     def voters_params(self):
         return self._voters_params
-
