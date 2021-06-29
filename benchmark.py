@@ -250,11 +250,11 @@ lib_1pt = [
 #test_chain_same_pt("benchmarks/chain_same_pt_tmp.csv", PatternType.TMR_V123)
 #plot_1pt_chain_benchmark("benchmarks/v111_tmp_chain.csv", "tmr-v111")
 #plot_chain_same_pt()
-plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111",
-                 "benchmarks/plain_chain.csv": "plain",
-                 "benchmarks/tmr_V123_chain.csv": "tmr-v123",
-                 "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111",
-                 "benchmarks/V123_V111_plain_chain.csv": "tmr-v123, tmr-v111, plain"})
+#plot_compare_pt({"benchmarks/tmr_V111_chain.csv": "tmr-v111",
+#                 "benchmarks/plain_chain.csv": "plain",
+#                 "benchmarks/tmr_V123_chain.csv": "tmr-v123",
+#                 "benchmarks/V123_V111_chain.csv": "tmr-v123, tmr-v111",
+#                 "benchmarks/V123_V111_plain_chain.csv": "tmr-v123, tmr-v111, plain"})
 #test_chain_opt(file_name="benchmarks/3pt_opt_chain_sym.csv", max_len=8)
 #plot_opt("benchmarks/3pt_opt_chain.csv", "opt")
 #plot_compare_opt(["benchmarks/3pt_opt_chain_sym.csv", "benchmarks/3pt_opt_chain.csv"],"test")
