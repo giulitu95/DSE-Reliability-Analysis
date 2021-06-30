@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-from patterns import PatternType, TmrV111Definition, TmrV123Definition, PlainDefinition, TmrV010Definition
+from patterns import PatternType, PlainDefinition, CmpDefinition, TmrV111Definition, TmrV123Definition, TmrV010Definition, TmrV101Definition, TmrV001Definition
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
 import math
 
-__author__ = "Giuliano Turri"
+__author__ = "Giuliano Turri, Antonio Tierno"
 
 class ArchNode:
     """
@@ -87,6 +87,7 @@ class ArchNode:
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
             elif pt.pt_type == PatternType.TMR_V123:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
@@ -114,6 +115,7 @@ class ArchNode:
                 if len(self._fault_atoms) > 6:
                     for f_idx, f_atom in enumerate(self._fault_atoms[7:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
             elif pt.pt_type == PatternType.PLAIN:
                 if pt.pt_type not in pt_type2csa:
                     pt_def = PlainDefinition(comp_name, n_predecessors, self._fault_atoms[0])
@@ -129,8 +131,122 @@ class ArchNode:
                 if len(self._fault_atoms) > 1:
                     for f_idx, f_atom in enumerate(self._fault_atoms[2:]):  # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf, Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.CMP:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = CmpDefinition(comp_name, n_predecessors, self._fault_atoms[:2], self._fault_atoms[2])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:2]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # comparator:
+                for f_idx, f_atom in enumerate(self._fault_atoms[2]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.comparator_param[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 2:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[3:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V001:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV001Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 3:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V101:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV101Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V010:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV010Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 3:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
             else:
                 NotImplementedError()
+
 
             # TODO: do this for all patterns:
             #  elif: pt.pt_type == PatternType.TMR_V123

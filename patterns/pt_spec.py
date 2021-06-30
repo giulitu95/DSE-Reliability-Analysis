@@ -1,10 +1,22 @@
 from params import NonFuncParamas
 from patterns import PatternType
+import patterns.plain as plain
 import patterns.cmp as cmp
 import patterns.tmr_v111 as tmr_v111
 import patterns.tmr_v123 as tmr_v123
 import patterns.tmr_v010 as tmr_v010
-import patterns.plain as plain
+#import patterns.tmr_v101 as tmr_v101
+import patterns.tmr_v001 as tmr_v001
+#import patterns.tmr_v011 as tmr_v011
+#import patterns.tmr_v012 as tmr_v012
+#import patterns.tmr_v100 as tmr_v100
+import patterns.tmr_v101 as tmr_v101
+#import patterns.tmr_v102 as tmr_v102
+#import patterns.tmr_v110 as tmr_v110
+#import patterns.tmr_v112 as tmr_v112
+#import patterns.tmr_v120 as tmr_v120
+#import patterns.tmr_v122 as tmr_v122
+
 
 __author__ = "Giuliano Turri, Antonio Tierno"
 
@@ -27,7 +39,7 @@ class PatternSpec:
     def param_list(self):
         return self._param_list
 
-
+# === CMP ===
 class CmpSpec(PatternSpec):
     def __init__(self, modules_params: list, comparator_params: NonFuncParamas):
         """
@@ -38,7 +50,7 @@ class CmpSpec(PatternSpec):
 
         self._modules_params = modules_params
         self._comparator_param = comparator_params
-        super(CmpSpec, self).__init__(PatternType.TMR_V111, tmr_v111.TmrV111, modules_params + [voter_params])
+        super(CmpSpec, self).__init__(PatternType.CMP, cmp.Comparator, modules_params + [comparator_params])
 
     @property
     def modules_params(self):
@@ -48,7 +60,7 @@ class CmpSpec(PatternSpec):
     def comparator_param(self):
         return self._comparator_param
 
-
+# === TMR_V111 ===
 class TmrV111Spec(PatternSpec):
     def __init__(self, modules_params: list, voter_params: NonFuncParamas):
         """
@@ -68,7 +80,7 @@ class TmrV111Spec(PatternSpec):
     def voter_param(self):
         return self._voter_param
 
-
+# === TMR_V123 ===
 class TmrV123Spec(PatternSpec):
     def __init__(self, modules_params: list, voters_params: list):
         """
@@ -88,7 +100,7 @@ class TmrV123Spec(PatternSpec):
     def voters_params(self):
         return self._voters_params
 
-
+# === PLAIN ===
 class PlainSpec(PatternSpec):
     def __init__(self, module_params: NonFuncParamas):
         self._module_params = module_params
@@ -98,7 +110,7 @@ class PlainSpec(PatternSpec):
     def module_params(self):
         return self._module_params
 
-
+# === TMR_V010 ===
 class TmrV010Spec(PatternSpec):
     def __init__(self, modules_params: list, voters_params: NonFuncParamas):
         """
@@ -109,6 +121,46 @@ class TmrV010Spec(PatternSpec):
         self._modules_params = modules_params
         self._voters_params = voters_params
         super(TmrV010Spec, self).__init__(PatternType.TMR_V010, tmr_v010.TmrV010, modules_params + [voters_params])
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def voters_params(self):
+        return self._voters_params
+
+# === TMR_V101 ===
+class TmrV101Spec(PatternSpec):
+    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+        """
+        Create a specification of a TMR-V010
+        :param modules_probs: list of length 3 containing the probabilities of the 3 modules
+        :param voter_probs: fault probability of the voter
+        """
+        self._modules_params = modules_params
+        self._voters_params = voters_params
+        super(TmrV101Spec, self).__init__(PatternType.TMR_V101, tmr_v101.TmrV101, modules_params + [voters_params])
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def voters_params(self):
+        return self._voters_params
+
+# === TMR_V001 ===
+class TmrV001Spec(PatternSpec):
+    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+        """
+        Create a specification of a TMR-V001
+        :param modules_probs: list of length 3 containing the probabilities of the 3 modules
+        :param voter_probs: fault probability of the voter
+        """
+        self._modules_params = modules_params
+        self._voters_params = voters_params
+        super(TmrV001Spec, self).__init__(PatternType.TMR_V001, tmr_v001.TmrV001, modules_params + [voters_params])
 
     @property
     def modules_params(self):

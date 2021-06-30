@@ -91,10 +91,4 @@ if __name__ == "__main__":
     pt123_def = TmrV123Definition("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1"), Symbol("F_V2")])
     pt = pt123_def.create(Symbol("beh", FunctionType(REAL, [REAL])))
     print(pt.behaviour_formula.serialize())
-
-# (((! F_M0) -> (C1.TMR_V123.M0.o0 = beh(C1.TMR_V123.M0.i0))) & 
-# ((! F_M1) -> (C1.TMR_V123.M1.o0 = beh(C1.TMR_V123.M1.i0))) & 
-# ((! F_M2) -> (C1.TMR_V123.M2.o0 = beh(C1.TMR_V123.M2.i0))) & 
-# ((! F_V0) -> (((C1.TMR_V123.M0.o0 = C1.TMR_V123.M1.o0) | (C1.TMR_V123.M0.o0 = C1.TMR_V123.M2.o0)) ? (C1.TMR_V123.V0.o0 = C1.TMR_V123.M0.o0) : ((C1.TMR_V123.M1.o0 = C1.TMR_V123.M2.o0) -> (C1.TMR_V123.V0.o0 = C1.TMR_V123.M1.o0)))) & 
-# ((! F_V1) -> (((C1.TMR_V123.M0.o0 = C1.TMR_V123.M1.o0) | (C1.TMR_V123.M0.o0 = C1.TMR_V123.M2.o0)) ? (C1.TMR_V123.V1.o0 = C1.TMR_V123.M0.o0) : ((C1.TMR_V123.M1.o0 = C1.TMR_V123.M2.o0) -> (C1.TMR_V123.V1.o0 = C1.TMR_V123.M1.o0)))) & 
-# ((! F_V2) -> (((C1.TMR_V123.M0.o0 = C1.TMR_V123.M1.o0) | (C1.TMR_V123.M0.o0 = C1.TMR_V123.M2.o0)) ? (C1.TMR_V123.V2.o0 = C1.TMR_V123.M0.o0) : ((C1.TMR_V123.M1.o0 = C1.TMR_V123.M2.o0) -> (C1.TMR_V123.V2.o0 = C1.TMR_V123.M1.o0)))))'''
+'''

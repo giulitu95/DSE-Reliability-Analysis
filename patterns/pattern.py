@@ -9,14 +9,25 @@ __author__ = "Giuliano Turri"
 
 class PatternType(Enum):
     """
-    Enum which determines the type of pattern (e.g. TMR_V111, TRM_V123, DPX...)
+    Enum which determines the type of pattern (e.g. DPX, TMR_V111, TRM_V123...)
     """
     TMR_V111 = 1
     TMR_V123 = 2
     PLAIN = 3
     TMR_V010 = 4
     CMP = 5
-    # ...
+    TMR_V101 = 6
+    TMR_V001 = 7
+    # TMR_V011 = 8
+    # TMR_V012 = 9
+    # TMR_V100 = 10
+    # TMR_V101 = 11
+    # TMR_V102 = 12
+    # TMR_V110 = 13
+    # TMR_V112 = 14
+    # TMR_V120 = 15
+    # TMR_V122 = 16
+    # Add more patterns here...
 
 
 class PatternDefinition:
