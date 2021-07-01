@@ -18,7 +18,7 @@ class PatternType(Enum):
     CMP = 5
     TMR_V101 = 6
     TMR_V001 = 7
-    # TMR_V011 = 8
+    TMR_V011 = 8
     # TMR_V012 = 9
     # TMR_V100 = 10
     # TMR_V101 = 11
