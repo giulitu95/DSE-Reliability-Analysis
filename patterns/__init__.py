@@ -9,7 +9,7 @@ from patterns.tmr_v011 import *
 #from patterns.tmr_v100 import *
 from patterns.tmr_v101 import *
 #from patterns.tmr_v102 import *
-#from patterns.tmr_v110 import *
+from patterns.tmr_v110 import *
 from patterns.tmr_v111 import *
 #from patterns.tmr_v112 import *
 #from patterns.tmr_v120 import *

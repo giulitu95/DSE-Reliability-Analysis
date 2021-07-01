@@ -86,8 +86,9 @@ class TmrV011(Pattern):
         subcomp_beh_formula.extend([voter.behaviour_formula for voter in voters])
         self._behaviour_formula = And(subcomp_beh_formula)
 
-
+'''
 if __name__ == "__main__":
     nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
     tmr = TmrV011("C1", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2")], [Symbol("F3"), Symbol("F4")], nominal_beh)
     print(tmr.behaviour_formula.serialize())
+'''

@@ -12,7 +12,7 @@ import patterns.tmr_v011 as tmr_v011
 #import patterns.tmr_v100 as tmr_v100
 import patterns.tmr_v101 as tmr_v101
 #import patterns.tmr_v102 as tmr_v102
-#import patterns.tmr_v110 as tmr_v110
+import patterns.tmr_v110 as tmr_v110
 #import patterns.tmr_v112 as tmr_v112
 #import patterns.tmr_v120 as tmr_v120
 #import patterns.tmr_v122 as tmr_v122

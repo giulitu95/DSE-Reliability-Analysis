@@ -87,9 +87,10 @@ class TmrV101(Pattern):
         self._behaviour_formula = And(subcomp_beh_formula)
 
 
-
+'''
 # Test - Example
 if __name__ == "__main__":
     nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
     tmr = TmrV101("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1")], nominal_beh)
     print(tmr.behaviour_formula.serialize())
+'''
