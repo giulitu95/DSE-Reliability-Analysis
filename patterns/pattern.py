@@ -20,7 +20,7 @@ class PatternType(Enum):
     TMR_V001 = 7
     TMR_V011 = 8
     # TMR_V012 = 9
-    # TMR_V100 = 10
+    TMR_V100 = 10
     # TMR_V101 = 11
     # TMR_V102 = 12
     TMR_V110 = 13

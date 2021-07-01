@@ -6,7 +6,7 @@ from patterns.tmr_v001 import *
 from patterns.tmr_v010 import *
 from patterns.tmr_v011 import *
 #from patterns.tmr_v012 import *
-#from patterns.tmr_v100 import *
+from patterns.tmr_v100 import *
 from patterns.tmr_v101 import *
 #from patterns.tmr_v102 import *
 from patterns.tmr_v110 import *

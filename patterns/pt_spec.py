@@ -8,7 +8,7 @@ import patterns.tmr_v010 as tmr_v010
 import patterns.tmr_v001 as tmr_v001
 import patterns.tmr_v011 as tmr_v011
 #import patterns.tmr_v012 as tmr_v012
-#import patterns.tmr_v100 as tmr_v100
+import patterns.tmr_v100 as tmr_v100
 import patterns.tmr_v101 as tmr_v101
 #import patterns.tmr_v102 as tmr_v102
 import patterns.tmr_v110 as tmr_v110
@@ -200,6 +200,26 @@ class TmrV110Spec(PatternSpec):
         self._modules_params = modules_params
         self._voters_params = voters_params
         super(TmrV110Spec, self).__init__(PatternType.TMR_V110, tmr_v110.TmrV110, modules_params + voters_params)
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def voters_params(self):
+        return self._voters_params
+
+# === TMR_V100 ===
+class TmrV100Spec(PatternSpec):
+    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+        """
+        Create a specification of a TMR-V001
+        :param modules_probs: list of length 3 containing the probabilities of the 3 modules
+        :param voter_probs: fault probability of the voter
+        """
+        self._modules_params = modules_params
+        self._voters_params = voters_params
+        super(TmrV100Spec, self).__init__(PatternType.TMR_V100, tmr_v100.TmrV100, modules_params + [voters_params])
 
     @property
     def modules_params(self):
