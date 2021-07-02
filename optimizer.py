@@ -64,5 +64,6 @@ class Dse:
                     print("   Cost: " + str(r[0]) + ", Power " + str(r[1]) + ", Size: " + str(r[2]) + ", F-prob: ", str(float(fractions.Fraction(r[3].serialize()))))
                     pareto_points.append((model, r))
                 print("[Optimizer] Done!")
+            appr.close()
             if benchmark is not None: benchmark.optimization_time = time.perf_counter() - time_start
             return pareto_points
