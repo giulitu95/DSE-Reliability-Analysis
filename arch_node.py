@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from patterns import PatternType, PlainDefinition, CmpDefinition, TmrV111Definition, TmrV123Definition, TmrV010Definition, TmrV101Definition, TmrV001Definition, TmrV011Definition, TmrV110Definition, TmrV100Definition
+from patterns import PatternType, PlainDefinition, CmpDefinition, TmrV111Definition, TmrV123Definition, TmrV010Definition, TmrV101Definition, TmrV001Definition, TmrV011Definition, TmrV110Definition, TmrV100Definition, TmrV122Definition, TmrV112Definition, TmrV120Definition, TmrV102Definition, TmrV012Definition
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
@@ -191,7 +191,7 @@ class ArchNode:
             elif pt.pt_type == PatternType.TMR_V101:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
-                    pt_def = TmrV101Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    pt_def = TmrV101Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
                     csa = Csa(pt_def)
                     pt_type2csa[pt.pt_type] = csa
                 else:
@@ -206,13 +206,13 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
                     prob_constraints.append(
                         Implies(
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
-                if len(self._fault_atoms) > 5:
+                if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
 
@@ -247,7 +247,7 @@ class ArchNode:
             elif pt.pt_type == PatternType.TMR_V011:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
-                    pt_def = TmrV011Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    pt_def = TmrV011Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
                     csa = Csa(pt_def)
                     pt_type2csa[pt.pt_type] = csa
                 else:
@@ -255,27 +255,27 @@ class ArchNode:
                 self._csa2configs[csa].append(conf)
                 # assign non functional parameters
                 # modules:
-                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
                     prob_constraints.append(
                         Implies(
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
                     prob_constraints.append(
                         Implies(
                             conf,
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
-                if len(self._fault_atoms) > 5:
+                if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
 
             elif pt.pt_type == PatternType.TMR_V110:
                 # Create csa
                 if pt.pt_type not in pt_type2csa:
-                    pt_def = TmrV110Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    pt_def = TmrV110Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3])
                     csa = Csa(pt_def)
                     pt_type2csa[pt.pt_type] = csa
                 else:
@@ -290,7 +290,7 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
                     prob_constraints.append(
                         Implies(
                             conf,
@@ -326,6 +326,146 @@ class ArchNode:
                     )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V122:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV122Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V112:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV112Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V120:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV120Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V102:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV102Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
+
+            elif pt.pt_type == PatternType.TMR_V012:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = TmrV012Definition(comp_name, n_predecessors, self._fault_atoms[:3], self._fault_atoms[3:5])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:3]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[3:5]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 5:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
 
             else:

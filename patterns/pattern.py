@@ -11,22 +11,21 @@ class PatternType(Enum):
     """
     Enum which determines the type of pattern (e.g. DPX, TMR_V111, TRM_V123...)
     """
-    TMR_V111 = 1
-    TMR_V123 = 2
-    PLAIN = 3
-    TMR_V010 = 4
-    CMP = 5
-    TMR_V101 = 6
-    TMR_V001 = 7
-    TMR_V011 = 8
-    # TMR_V012 = 9
-    TMR_V100 = 10
-    # TMR_V101 = 11
-    # TMR_V102 = 12
-    TMR_V110 = 13
-    # TMR_V112 = 14
-    # TMR_V120 = 15
-    # TMR_V122 = 16
+    PLAIN = 1
+    CMP = 2
+    TMR_V111 = 3
+    TMR_V001 = 4
+    TMR_V010 = 5
+    TMR_V100 = 6
+    TMR_V011 = 7
+    TMR_V101 = 8
+    TMR_V110 = 9
+    TMR_V122 = 10
+    TMR_V112 = 11
+    TMR_V120 = 12
+    TMR_V102 = 13
+    TMR_V012 = 14
+    TMR_V123 = 15
     # Add more patterns here...
 
 
