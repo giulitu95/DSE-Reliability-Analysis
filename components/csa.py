@@ -7,6 +7,9 @@ from pysmt.shortcuts import *
 import os
 from pysmt.parsing import parse
 from allsmt import allsmt
+import json
+import pickle
+
 __author__ = "Giuliano Turri"
 
 
@@ -64,36 +67,43 @@ class Csa(Component):
         :return: behaviour boolean formula
         """
         #print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Get AllSMT behaviour formula: ")
-        file_name = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".f")
-        if not os.path.exists(file_name):
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " AllSMT formula is not in cache, performing AllSMT...", end= "\x1b[1K\r")
+        formula_fn = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + ".pickle")
+        atoms_fn = os.path.join('csa-cache/', self._pt_definition.pt_type.name + "_" + str(self._pt_definition.comp_n_inputs) + "_atoms" + ".pickle")
+        if not os.path.exists(formula_fn) or not os.path.exists(atoms_fn):
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " AllSMT formula is not in cache, performing AllSMT...")
             formula = allsmt(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Create dummy AllSMT formula and save it in cache...", end= "\x1b[1K\r")
-            dummy_qe_formula = formula.serialize()
-            for idx, f_atom in enumerate(self._fault_atoms):
-                dummy_qe_formula = dummy_qe_formula.replace(f_atom.serialize(), "$EMPTY_F$" + str(idx))
-            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_type.name)
-            dummy_qe_formula = dummy_qe_formula.replace(self._pt_definition.comp_name, "$EMPTY$")
-            # Print formula on file
-            with open(file_name, "w") as cache_file:
-                cache_file.write(dummy_qe_formula)
-
+            # Create a dictionary containing tha atoms to change when the cache is read
+            atoms = {}
+            atoms["f_atoms"] = [f.serialize() for f in self._fault_atoms]
+            atoms["i_concr"] = [c.serialize() for c in self._concretizer.input_ports]
+            atoms["o_abstr"] = [a.serialize() for a in self._abstractor.output_ports]
+            # Save dictionary
+            with open(atoms_fn, "wb") as file:
+                pickle.dump(atoms, file)
+            # Save formula
+            with open(formula_fn, "wb") as file:
+                pickle.dump(formula, file)
         else:
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Formula found in cache")
-            # Import formula from cache
-            with open(file_name, "r") as cache_file:
-                dummy_qe_formula_str = cache_file.read()
-            # Parse string and extract SMT formula
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Parsing...", end="\r")
-            formula_str = dummy_qe_formula_str.replace("$EMPTY$", self._pt_definition.comp_name)
+            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Import Formula... ", end="")
+            with open(formula_fn, "rb") as file:
+                cached_formula = pickle.load(file)
+            to_substitute = {}
+            with open(atoms_fn, "rb") as file:
+                old_atoms = pickle.load(file)
             for idx, f_atom in enumerate(self._fault_atoms):
-                formula_str = formula_str.replace("$EMPTY_F$" + str(idx), f_atom.serialize())
-            formula_str = formula_str.replace(self._pt_definition.pt_type.name, self._pt_definition.pt_type.name)
-            formula = parse(formula_str)
-            print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Imported!")
-            # Check
-            # with Solver("z3") as solver:
-            #    print(solver.is_sat(Not(Implies(self._behaviour_formula, formula))))
+                old_f_atoms = old_atoms["f_atoms"]
+                to_substitute[parse(old_f_atoms[idx])] = f_atom
+            for idx, i_ports in enumerate(self._concretizer.input_ports):
+                old_i_concr = old_atoms["i_concr"]
+                to_substitute[parse(old_i_concr[idx])] = i_ports
+            for idx, o_ports in enumerate(self._abstractor.output_ports):
+                old_o_concr = old_atoms["o_abstr"]
+                k = parse(old_o_concr[idx])
+                to_substitute[k] = o_ports
+            f_mng = get_env().formula_manager
+            c = f_mng.normalize(cached_formula)
+            formula = substitute(c, to_substitute)
+            print(" OK!")
         return formula
 
     @property

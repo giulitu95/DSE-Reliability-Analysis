@@ -43,15 +43,9 @@ class Voter(Component):
                     self._output_ports[0],
                     self._input_ports[0]
                 ),
-                Implies(
-                    Equals(
-                        self._input_ports[1],
-                        self._input_ports[2]
-                    ),
-                    Equals(
-                        self._output_ports[0],
-                        self._input_ports[1]
-                    )
+                Equals(
+                    self._output_ports[0],
+                    self._input_ports[1]
                 )
             )
         )

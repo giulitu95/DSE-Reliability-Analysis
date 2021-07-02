@@ -6,7 +6,7 @@ from pysmt.shortcuts import *
 from rel_extractor import Extractor
 import repycudd
 import time
-
+import os
 __author__ = "Giuliano Turri"
 
 
@@ -65,6 +65,24 @@ class RelTools:
         self._compatibility_constr = And(compatibility_constr)
         self._conf_formula = And(conf_formulas)
         self._prob_constr = And(prob_constr)
+
+    def __enter__(self):
+        return self
+
+    def close(self):
+        cache_folder = 'csa-cache'
+        for filename in os.listdir(cache_folder):
+            file_path = os.path.join(cache_folder, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def __get_qe_formula(self):
         """
@@ -161,6 +179,8 @@ class RelTools:
     @property
     def nxnode2archnode(self):
         return self._nxnode2archnode
+
+
 
 
 '''# Test - Example

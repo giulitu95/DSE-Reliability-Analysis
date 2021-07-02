@@ -32,9 +32,9 @@ def test_rectangle(file_name, pt_lib, max_len = 100):
             edges.append(("S0_B", "C0_B"))
             graph.add_nodes_from(nodes)
             graph.add_edges_from(edges)
-            r = RelTools(graph)
-            r.extract_reliability_formula(benchmark=benchmark)
-            writer.writerow(benchmark.get_values() + [len])
+            with RelTools(graph) as r:
+                r.extract_reliability_formula(benchmark=benchmark)
+                writer.writerow(benchmark.get_values() + [len])
 
 if __name__ == "__main__":
     tmr_v111 = TmrV111Spec(
