@@ -21,6 +21,10 @@ class Approch:
     def r(self):
         return self._r
 
+    @abc.abstractmethod
+    def close(self):
+        pass
+
 
 # Approach 1: Enumerative
 class Enumerative(Approch):
@@ -91,8 +95,8 @@ class Enumerative(Approch):
             for node in ng.nodes:
                 if ng.nodes[node]["type"]  == "COMP":
                     ng.nodes[node]["pt_library"] = [comb.pop(0)]
-            r = RelTools(ng)
-            rel_symbol, formula = r.extract_reliability_formula()
+            with RelTools(ng) as r:
+                rel_symbol, formula = r.extract_reliability_formula()
             # Find reliability value for this combination
             with Solver(name="z3") as solver:
                 solver.add_assertion(formula)
@@ -118,6 +122,9 @@ class Hybrid(Approch):
                 lib = self._graph.nodes[node]["pt_library"]
                 self._n_cfg = self._n_cfg * len(lib)  # Number of elements in the cartesiona product
         self._cfg_id = Symbol("cfg", INT)
+
+    def close(self):
+        self._r.close()
 
     # Cost function: Cost
     def extract_cost(self):
@@ -225,6 +232,9 @@ class Hybrid(Approch):
 class Symbolic(Approch):
     def __init__(self, graph):
         super().__init__(graph)
+
+    def close(self):
+        self._r.close()
 
     # Cost function: Cost
     def extract_cost(self):

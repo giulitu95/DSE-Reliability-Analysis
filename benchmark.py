@@ -50,7 +50,7 @@ def test_chain(file_name, pt_lib, max_len = 100):
     with open(file_name, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(Benchmark.get_header() + ["len"]) # header
-        for len in range(2, max_len):
+        for len in range(3, max_len):
             benchmark = Benchmark()
             print("~"*10 + " " + str(len) + " len chain " + "~"*10)
             graph = nx.DiGraph()
@@ -246,7 +246,7 @@ lib_1pt = [
            ]
 
 
-#test_chain("benchmarks/v111_tmp_chain.csv", lib_1pt, max_len=3)
+#test_chain("benchmarks/test.csv", lib_1pt, max_len=4)
 #test_chain_same_pt("benchmarks/chain_same_pt_tmp.csv", PatternType.TMR_V123)
 #plot_1pt_chain_benchmark("benchmarks/v111_tmp_chain.csv", "tmr-v111")
 #plot_chain_same_pt()
