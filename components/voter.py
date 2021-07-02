@@ -49,7 +49,7 @@ class Voter(Component):
                 )
             )
         )
-        # if faulty atom is false, then the bheaviour is nominal
+        # if faulty atom is false, then the behaviour is nominal
         self._behaviour_formula = Implies(
                 Not(self._fault_atom),
                 nom_behaviour
