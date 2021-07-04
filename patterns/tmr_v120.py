@@ -73,9 +73,9 @@ class TmrV120(Pattern):
 
         # Output of the pattern corresponds to the output ports of Module1, of voter V1, and of voter V2
         output_ports = []
+        output_ports.append(modules_out_ports[0])
         for voter in voters:
             output_ports.extend(voter.output_ports)
-        output_ports.append(modules_out_ports[0])
         assert len(output_ports) == 3, "[" + pattern_name + "] The pattern must have 3 outputs"
         super(TmrV120, self).__init__(pattern_name, PatternType.TMR_V120, modules_fault_atoms + voters_fault_atoms, modules, output_ports)
 

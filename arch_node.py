@@ -486,7 +486,7 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
                     )
                 if len(self._fault_atoms) > 4:
-                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                    for f_idx, f_atom in enumerate(self._fault_atoms[5:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
             else:
                 NotImplementedError()
