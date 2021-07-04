@@ -73,8 +73,8 @@ class TmrV101(Pattern):
 
         # Output port of the pattern corresponds to the output ports of the voter, of Module 2, of the voter
         output_ports = modules_out_ports
-        output_ports[0] = voters[0]
-        output_ports[2] = voters[1]
+        output_ports[0] = voters[0].output_ports[0]
+        output_ports[2] = voters[1].output_ports[0]
         assert len(output_ports) == 3, "[" + pattern_name + "] The pattern must have 3 outputs"
         super(TmrV101, self).__init__(pattern_name, PatternType.TMR_V101, modules_fault_atoms + voters_fault_atoms,
                                       modules, output_ports)
@@ -87,10 +87,10 @@ class TmrV101(Pattern):
         self._behaviour_formula = And(subcomp_beh_formula)
 
 
-'''
-# Test - Example
+
+'''# Test - Example
 if __name__ == "__main__":
     nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
     tmr = TmrV101("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1")], nominal_beh)
     print(tmr.behaviour_formula.serialize())
-'''
+    print(tmr.output_ports)'''

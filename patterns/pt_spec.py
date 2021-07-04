@@ -276,7 +276,7 @@ class TmrV120Spec(PatternSpec):
 
 # === TMR_V102 ===
 class TmrV102Spec(PatternSpec):
-    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+    def __init__(self, modules_params: list, voters_params: list):
         """
         Create a specification of a TMR-V012
         :param modules_probs: list of length 3 containing the probabilities of the 3 modules
@@ -284,7 +284,7 @@ class TmrV102Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV102Spec, self).__init__(PatternType.TMR_V102, tmr_v102.TmrV102, modules_params + [voters_params])
+        super(TmrV102Spec, self).__init__(PatternType.TMR_V102, tmr_v102.TmrV102, modules_params + voters_params)
 
     @property
     def modules_params(self):

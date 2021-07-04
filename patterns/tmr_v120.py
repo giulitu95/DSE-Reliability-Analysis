@@ -86,10 +86,10 @@ class TmrV120(Pattern):
         subcomp_beh_formula.extend([voter.behaviour_formula for voter in voters])
         self._behaviour_formula = And(subcomp_beh_formula)
 
-'''
-# Test - Example
+
+'''# Test - Example
 if __name__ == "__main__":
     pt120_def = TmrV120Definition("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1")])
     pt = pt120_def.create(Symbol("beh", FunctionType(REAL, [REAL])))
     print(pt.behaviour_formula.serialize())
-'''
+    print(pt.output_ports)'''

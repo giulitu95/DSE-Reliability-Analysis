@@ -75,7 +75,7 @@ class TmrV122(Pattern):
         output_ports = []
         for voter in voters:
             output_ports.extend(voter.output_ports)
-        output_ports.append(voters[1].output_ports)
+        output_ports.append(voters[1].output_ports[0])
         assert len(output_ports) == 3, "[" + pattern_name + "] The pattern must have 3 outputs"
         super(TmrV122, self).__init__(pattern_name, PatternType.TMR_V122, modules_fault_atoms + voters_fault_atoms, modules, output_ports)
 
@@ -86,10 +86,10 @@ class TmrV122(Pattern):
         subcomp_beh_formula.extend([voter.behaviour_formula for voter in voters])
         self._behaviour_formula = And(subcomp_beh_formula)
 
-'''
-# Test - Example
+
+'''# Test - Example
 if __name__ == "__main__":
     pt122_def = TmrV122Definition("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1")])
     pt = pt122_def.create(Symbol("beh", FunctionType(REAL, [REAL])))
     print(pt.behaviour_formula.serialize())
-'''
+    print(pt.output_ports)'''
