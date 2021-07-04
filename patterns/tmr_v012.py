@@ -25,7 +25,7 @@ class TmrV012Definition(PatternDefinition):
         assert len(modules_f_atoms) == 3, "[" + pt_type.name + "] pattern has 3 modules, choose a correct number of fault atoms"
         self._voters_f_atoms = voters_f_atoms
         assert len(voters_f_atoms) == 2, "[" + pt_type.name + "] pattern has 2 voters, choose a correct number of fault atoms"
-        super(TmrV012Definition, self).__init__(comp_name, comp_n_inputs, modules_f_atoms + voters_f_atoms, PatternType.TMR_V112)
+        super(TmrV012Definition, self).__init__(comp_name, comp_n_inputs, modules_f_atoms + voters_f_atoms, PatternType.TMR_V012)
         self._pt_name = pt_type.name
 
     def create(self, nominal_mod_beh) -> Pattern:
@@ -86,10 +86,11 @@ class TmrV012(Pattern):
         subcomp_beh_formula.extend([voter.behaviour_formula for voter in voters])
         self._behaviour_formula = And(subcomp_beh_formula)
 
-'''
-# Test - Example
+
+'''# Test - Example
 if __name__ == "__main__":
     pt012_def = TmrV012Definition("C1", 1, [Symbol("F_M0"), Symbol("F_M1"), Symbol("F_M2")], [Symbol("F_V0"), Symbol("F_V1")])
     pt = pt012_def.create(Symbol("beh", FunctionType(REAL, [REAL])))
     print(pt.behaviour_formula.serialize())
+    print(pt.output_ports)
 '''

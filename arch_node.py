@@ -150,12 +150,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # comparator:
-                for f_idx, f_atom in enumerate(self._fault_atoms[2]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.comparator_param[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[2]], Real(pt.comparator_param.fault_prob)))
+                )
                 if len(self._fault_atoms) > 2:
                     for f_idx, f_atom in enumerate(self._fault_atoms[3:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -178,12 +177,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -206,12 +204,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -234,12 +231,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -262,12 +258,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -290,12 +285,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 5:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
@@ -318,12 +312,11 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[3]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
-                    )
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[3]], Real(pt.voters_params.fault_prob)))
+                )
                 if len(self._fault_atoms) > 3:
                     for f_idx, f_atom in enumerate(self._fault_atoms[4:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
