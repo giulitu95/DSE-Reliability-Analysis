@@ -15,4 +15,4 @@ from patterns.tmr_v120 import *
 from patterns.tmr_v102 import *
 from patterns.tmr_v012 import *
 from patterns.tmr_v123 import *
-
+from patterns.xooy_3oo4 import *

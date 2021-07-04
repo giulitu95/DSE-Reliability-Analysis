@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from patterns import PatternType, PlainDefinition, CmpDefinition, TmrV111Definition, TmrV123Definition, TmrV010Definition, TmrV101Definition, TmrV001Definition, TmrV011Definition, TmrV110Definition, TmrV100Definition, TmrV122Definition, TmrV112Definition, TmrV120Definition, TmrV102Definition, TmrV012Definition
+from patterns import PatternType, PlainDefinition, CmpDefinition, TmrV111Definition, TmrV123Definition, TmrV010Definition, TmrV101Definition, TmrV001Definition, TmrV011Definition, TmrV110Definition, TmrV100Definition, TmrV122Definition, TmrV112Definition, TmrV120Definition, TmrV102Definition, TmrV012Definition, Xooy_3oo4_Definition
 from components.csa import Csa
 from pysmt.shortcuts import *
 from collections import defaultdict
@@ -468,6 +468,33 @@ class ArchNode:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
 
+            elif pt.pt_type == PatternType.Xooy_3oo4:
+                # Create csa
+                if pt.pt_type not in pt_type2csa:
+                    pt_def = Xooy_3oo4_Definition(comp_name, n_predecessors, self._fault_atoms[:4], self._fault_atoms[4])
+                    csa = Csa(pt_def)
+                    pt_type2csa[pt.pt_type] = csa
+                else:
+                    csa = pt_type2csa[pt.pt_type]
+                self._csa2configs[csa].append(conf)
+                # assign non functional parameters
+                # modules:
+                for f_idx, f_atom in enumerate(self._fault_atoms[:4]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
+                    )
+                # voter:
+                for f_idx, f_atom in enumerate(self._fault_atoms[4]):
+                    prob_constraints.append(
+                        Implies(
+                            conf,
+                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                    )
+                if len(self._fault_atoms) > 4:
+                    for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
+                        prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
             else:
                 NotImplementedError()
 

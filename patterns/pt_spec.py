@@ -15,7 +15,7 @@ import patterns.tmr_v120 as tmr_v120
 import patterns.tmr_v102 as tmr_v102
 import patterns.tmr_v012 as tmr_v012
 import patterns.tmr_v123 as tmr_v123
-#3oo4
+import patterns.xooy_3oo4 as xooy_3oo4
 #3oo5
 #4oo5
 #4oo6
@@ -164,7 +164,7 @@ class TmrV011Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV011Spec, self).__init__(PatternType.TMR_V011, tmr_v011.TmrV011, modules_params + voters_params)
+        super(TmrV011Spec, self).__init__(PatternType.TMR_V011, tmr_v011.TmrV011, modules_params + [voters_params])
 
     @property
     def modules_params(self):
@@ -184,7 +184,7 @@ class TmrV101Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV101Spec, self).__init__(PatternType.TMR_V101, tmr_v101.TmrV101, modules_params + voters_params)
+        super(TmrV101Spec, self).__init__(PatternType.TMR_V101, tmr_v101.TmrV101, modules_params + [voters_params])
 
     @property
     def modules_params(self):
@@ -204,7 +204,7 @@ class TmrV110Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV110Spec, self).__init__(PatternType.TMR_V110, tmr_v110.TmrV110, modules_params + voters_params)
+        super(TmrV110Spec, self).__init__(PatternType.TMR_V110, tmr_v110.TmrV110, modules_params + [voters_params])
 
     @property
     def modules_params(self):
@@ -224,7 +224,7 @@ class TmrV122Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV122Spec, self).__init__(PatternType.TMR_V122, tmr_v122.TmrV122, modules_params + [voters_params])
+        super(TmrV122Spec, self).__init__(PatternType.TMR_V122, tmr_v122.TmrV122, modules_params + voters_params)
 
     @property
     def modules_params(self):
@@ -244,7 +244,7 @@ class TmrV112Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV112Spec, self).__init__(PatternType.TMR_V112, tmr_v122.TmrV112, modules_params + [voters_params])
+        super(TmrV112Spec, self).__init__(PatternType.TMR_V112, tmr_v122.TmrV112, modules_params + voters_params)
 
     @property
     def modules_params(self):
@@ -264,7 +264,7 @@ class TmrV120Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV120Spec, self).__init__(PatternType.TMR_V120, tmr_v120.TmrV120, modules_params + [voters_params])
+        super(TmrV120Spec, self).__init__(PatternType.TMR_V120, tmr_v120.TmrV120, modules_params + voters_params)
 
     @property
     def modules_params(self):
@@ -284,7 +284,7 @@ class TmrV102Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV102Spec, self).__init__(PatternType.TMR_V102, tmr_v102.TmrV102, modules_params + [voters_params])
+        super(TmrV102Spec, self).__init__(PatternType.TMR_V102, tmr_v102.TmrV102, modules_params + voters_params)
 
     @property
     def modules_params(self):
@@ -304,7 +304,7 @@ class TmrV012Spec(PatternSpec):
         """
         self._modules_params = modules_params
         self._voters_params = voters_params
-        super(TmrV012Spec, self).__init__(PatternType.TMR_V012, tmr_v012.TmrV012, modules_params + [voters_params])
+        super(TmrV012Spec, self).__init__(PatternType.TMR_V012, tmr_v012.TmrV012, modules_params + voters_params)
 
     @property
     def modules_params(self):
@@ -325,6 +325,26 @@ class TmrV123Spec(PatternSpec):
         self._modules_params = modules_params
         self._voters_params = voters_params
         super(TmrV123Spec, self).__init__(PatternType.TMR_V123, tmr_v123.TmrV123, modules_params + voters_params)
+
+    @property
+    def modules_params(self):
+        return self._modules_params
+
+    @property
+    def voters_params(self):
+        return self._voters_params
+
+# === XooY_3oo4 ===
+class Xooy3oo4Spec(PatternSpec):
+    def __init__(self, modules_params: list, voters_params: NonFuncParamas):
+        """
+        Create a specification of a TMR-V111
+        :param modules_probs: list of length 3 containing the probabilities of the 3 modules
+        :param voter_probs: fault probability of the voter
+        """
+        self._modules_params = modules_params
+        self._voters_params = voters_params
+        super(Xooy3oo4Spec, self).__init__(PatternType.Xooy_3oo4, xooy_3oo4.Xooy_3oo4, modules_params + [voters_params])
 
     @property
     def modules_params(self):

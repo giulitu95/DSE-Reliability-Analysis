@@ -4,7 +4,7 @@ from components.component import Component, ComponentType
 from enum import Enum
 import abc
 
-__author__ = "Giuliano Turri"
+__author__ = "Giuliano Turri, Antonio Tierno"
 
 
 class PatternType(Enum):
@@ -26,6 +26,7 @@ class PatternType(Enum):
     TMR_V102 = 13
     TMR_V012 = 14
     TMR_V123 = 15
+    Xooy_3oo4 = 16
     # Add more patterns here...
 
 
