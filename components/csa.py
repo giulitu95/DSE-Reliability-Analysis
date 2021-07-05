@@ -74,9 +74,9 @@ class Csa(Component):
             formula = allsmt(self._behaviour_formula, self.fault_atoms + self._concretizer.input_ports + self._abstractor.output_ports)
             # Create a dictionary containing tha atoms to change when the cache is read
             atoms = {}
-            atoms["f_atoms"] = [f.serialize() for f in self._fault_atoms]
-            atoms["i_concr"] = [c.serialize() for c in self._concretizer.input_ports]
-            atoms["o_abstr"] = [a.serialize() for a in self._abstractor.output_ports]
+            atoms["f_atoms"] = self._fault_atoms
+            atoms["i_concr"] = self._concretizer.input_ports
+            atoms["o_abstr"] = self._abstractor.output_ports
             # Save dictionary
             with open(atoms_fn, "wb") as file:
                 pickle.dump(atoms, file)
@@ -85,22 +85,23 @@ class Csa(Component):
                 pickle.dump(formula, file)
         else:
             print("[" + self._pt_definition.comp_name + "-" + self._pt_definition.pt_type.name + "]" + " Import Formula... ", end="")
+            f_mng = get_env().formula_manager
             with open(formula_fn, "rb") as file:
                 cached_formula = pickle.load(file)
             to_substitute = {}
             with open(atoms_fn, "rb") as file:
                 old_atoms = pickle.load(file)
+                for _, list in old_atoms.items():
+                    for idx, atom in enumerate(list): list[idx] = f_mng.normalize(atom)
+            old_f_atoms = old_atoms["f_atoms"]
             for idx, f_atom in enumerate(self._fault_atoms):
-                old_f_atoms = old_atoms["f_atoms"]
-                to_substitute[parse(old_f_atoms[idx])] = f_atom
+                to_substitute[old_f_atoms[idx]] = f_atom
+            old_i_concr = old_atoms["i_concr"]
             for idx, i_ports in enumerate(self._concretizer.input_ports):
-                old_i_concr = old_atoms["i_concr"]
-                to_substitute[parse(old_i_concr[idx])] = i_ports
+                to_substitute[old_i_concr[idx]] = i_ports
+            old_o_concr = old_atoms["o_abstr"]
             for idx, o_ports in enumerate(self._abstractor.output_ports):
-                old_o_concr = old_atoms["o_abstr"]
-                k = parse(old_o_concr[idx])
-                to_substitute[k] = o_ports
-            f_mng = get_env().formula_manager
+                to_substitute[old_o_concr[idx]] = o_ports
             c = f_mng.normalize(cached_formula)
             formula = substitute(c, to_substitute)
             print(" OK!")

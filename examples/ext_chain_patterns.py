@@ -65,6 +65,8 @@ if __name__ == "__main__":
     v111_v123_v012_filename = "benchmarks/extraction-v111-v123-v012-chain.csv"
     all_pt_filename = "benchmarks/extraction-allpt-chain.csv"
     plain_filename = "benchmarks/extraction-plain-chain.csv"
+    v111_v123_v012_v001_filename = "benchmarks/extraction-v111_v123_v012_v001_chain.csv"
+    v010_filename = "benchmarks/extraction-v010-chain.csv"
 
     if not os.path.isfile(v111_filename):
         test_chain(v111_filename, [tmr_v111])
@@ -80,6 +82,10 @@ if __name__ == "__main__":
         test_chain(v012_filename, [tmr_v012])
     if not os.path.isfile(all_pt_filename):
         test_chain(all_pt_filename, [tmr_v111, tmr_v123, tmr_v001, tmr_v010, tmr_v012])
+    if not os.path.isfile(v111_v123_v012_v001_filename):
+        test_chain(v111_v123_v012_v001_filename, [tmr_v111, tmr_v123, tmr_v001, tmr_v012])
+    if not os.path.isfile(v010_filename):
+        test_chain(v010_filename, [tmr_v010])
 
     v111_df = pd.read_csv(v111_filename)
     v012_df = pd.read_csv(v012_filename)
@@ -88,11 +94,17 @@ if __name__ == "__main__":
     all_pt_df = pd.read_csv(all_pt_filename)
     v111_v123_df = pd.read_csv(v111_v123_filename)
     v111_v123_v012_df = pd.read_csv(v111_v123_v012_filename)
+    v111_v123_v012_v001_df = pd.read_csv(v111_v123_v012_v001_filename)
+    v010_df = pd.read_csv(v010_filename)
 
     res_df = []
     tmp_v111_df = v111_df[['len', 'total_ext_time']].copy()
     tmp_v111_df['pattern'] = "TMR-V111"
     res_df.append(tmp_v111_df)
+
+    tmp_v010_df = v010_df[['len', 'total_ext_time']].copy()
+    tmp_v010_df['pattern'] = "TMR-V010"
+    res_df.append(tmp_v010_df)
 
     tmp_v123_df = v123_df[['len', 'total_ext_time']].copy()
     tmp_v123_df['pattern'] = "TMR-V123"
@@ -110,9 +122,13 @@ if __name__ == "__main__":
     tmp_v111_v123_v012_df['pattern'] = 'TMR-V111, TMR-V123, TMR-V012'
     res_df.append(tmp_v111_v123_v012_df)
 
-    all_pt_df = all_pt_df[['len', 'total_ext_time']].copy()
-    all_pt_df['pattern'] = "ALL"
-    res_df.append(all_pt_df)
+    tmp_v111_v123_v012_v001_df = v111_v123_v012_v001_df[['len', 'total_ext_time']].copy()
+    tmp_v111_v123_v012_v001_df['pattern'] = 'TMR-V111, TMR-V123, TMR-V012, TMR-V001'
+    res_df.append(tmp_v111_v123_v012_v001_df)
+
+    tmp_all_pt_df = all_pt_df[['len', 'total_ext_time']].copy()
+    tmp_all_pt_df['pattern'] = "ALL"
+    res_df.append(tmp_all_pt_df)
 
     tmp_v012_df = v012_df[['len', 'total_ext_time']].copy()
     tmp_v012_df['pattern'] = 'TMR-V012'
