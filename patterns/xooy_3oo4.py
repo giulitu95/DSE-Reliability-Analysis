@@ -80,14 +80,13 @@ class Xooy_3oo4(Pattern):
         # Modules
         subcomp_beh_formula = [module.behaviour_formula for module in modules]
         # Voter
-        subcomp_beh_formula.append(self. _voter.behaviour_formula)
+        subcomp_beh_formula.append(self._voter.behaviour_formula)
         self._behaviour_formula = And(subcomp_beh_formula)
 
 
-'''
+
 # Test - Example
 if __name__ == "__main__":
     nominal_beh = Symbol("nom-beh", FunctionType(REAL, [REAL]))
     ptn = Xooy_3oo4("C1", 1, [Symbol("F0"), Symbol("F1"), Symbol("F2"), Symbol("F3")], Symbol("F_V"), nominal_beh)
     print(ptn.behaviour_formula.serialize())
-'''

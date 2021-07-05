@@ -110,6 +110,36 @@ if __name__ == "__main__":
         powers.append(power)
         sizes.append(size)
 
+    #Example plot: Pareto 3d plot (3 objectives)
+    from mpl_toolkits import mplot3d
+    from mpl_toolkits.mplot3d import axes3d
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure()
+    #R
+    X = np.array([0.673964, 0.684499, 0.692971, 0.705806, 0.708439, 0.712695, 0.722956, 0.736914, 0.746054,  0.758847,  0.767727,  0.779429,  0.782202,  0.793175, 0.837494, 0.841752, 0.850627, 0.854541])
+    #C
+    Y = np.array([225.0, 226.0, 222.0, 221.0, 223.0, 221.0, 218.0, 219.0, 217.0, 218.0, 215.0, 216.0, 214.0, 215.0, 215.0, 214.0, 214.0, 213.0])
+    #P
+    Z = np.array([279.0, 275.0, 264.0, 269.0, 260.0, 261.0, 254.0, 250.0, 251.0, 247.0, 246.0, 242.0, 243.0, 239.0, 238.0, 242.0, 235.0, 239.0])
+    #
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    my_cmap = plt.get_cmap('hot')
+    trisurf = ax.plot_trisurf(X, Y, Z,
+                         cmap = my_cmap,
+                         linewidth = 0.2,
+                         antialiased = True,
+                         edgecolor = 'grey')
+    fig.colorbar(trisurf, ax = ax, shrink = 0.5, aspect = 5)
+    ax.set_title('Pareto of three functions')
+    # Adding labels
+    ax.set_xlabel('Reliability', fontweight ='bold')
+    ax.set_ylabel('Cost', fontweight ='bold')
+    ax.set_zlabel('Power Consumption', fontweight ='bold')
+    plt.show()
+
     df = pd.DataFrame(list(zip(rels, costs, powers, sizes)),
                    columns =['Reliability', 'Cost', 'Size', 'Power'])
     sorted = df.sort_values(by=['Reliability'])

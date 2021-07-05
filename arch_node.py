@@ -477,7 +477,7 @@ class ArchNode:
                 else:
                     csa = pt_type2csa[pt.pt_type]
                 self._csa2configs[csa].append(conf)
-                # assign non functional parameters
+                # assign non-functional parameters
                 # modules:
                 for f_idx, f_atom in enumerate(self._fault_atoms[:4]):
                     prob_constraints.append(
@@ -486,12 +486,12 @@ class ArchNode:
                             Equals(self._f_atoms2prob[f_atom], Real(pt.modules_params[f_idx].fault_prob)))
                     )
                 # voter:
-                for f_idx, f_atom in enumerate(self._fault_atoms[4]):
-                    prob_constraints.append(
-                        Implies(
-                            conf,
-                            Equals(self._f_atoms2prob[f_atom], Real(pt.voters_params[f_idx].fault_prob)))
+                prob_constraints.append(
+                    Implies(
+                        conf,
+                        Equals(self._f_atoms2prob[self._fault_atoms[4]], Real(pt.voters_params.fault_prob))
                     )
+                )
                 if len(self._fault_atoms) > 4:
                     for f_idx, f_atom in enumerate(self._fault_atoms[6:]): # fix the other variables to an arbitrary number (otherwise an infinite number of models exist)
                         prob_constraints.append(Implies(conf,Equals(self._f_atoms2prob[f_atom], Real(0))))
